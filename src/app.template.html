@@ -1,0 +1,1281 @@
+<title>FICSIT 生産ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a terminal-style left rail (nav + live plan meter) beside one working column laid on a blueprint grid.
+   The one loud element is the factory flow graph in the planner: belts carry parts at speeds set by their throughput. */
+:root{
+  --bg:#111821; --grid:rgba(120,160,200,.06); --panel:#18222E; --panel-2:#1E2A38; --sunk:#141D27; --line:#2A3949; --line-2:#36485C;
+  --fg:#E4EBF2; --muted:#8C9BAB; --faint:#5F6F80;
+  --accent:#F79A46; --accent-2:#FFB877; --accent-ink:#1B1006; --accent-soft:rgba(247,154,70,.14);
+  --alt:#B39BFF; --alt-soft:rgba(179,155,255,.14); --good:#62D394; --good-soft:rgba(98,211,148,.12); --bad:#FF8574; --bad-soft:rgba(255,133,116,.13);
+  --shadow:0 12px 40px rgba(0,0,0,.45);
+  /* resource node colours */
+  --r-iron:#9DB3C9; --r-copper:#E08A52; --r-stone:#D4C29C; --r-coal:#8A949F; --r-gold:#EBC54E; --r-quartz:#EC96C6; --r-sulfur:#DCD85E;
+  --r-bauxite:#D06B52; --r-uranium:#86D266; --r-sam:#B08AF0; --r-oil:#B48A6A; --r-nitro:#78D0E2; --r-water:#5A9CF0; --r-none:#8C9BAB;
+  --f-display:"Chakra Petch","IBM Plex Sans JP",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans JP","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#EDF1F5; --grid:rgba(40,90,150,.07); --panel:#FFFFFF; --panel-2:#F6F8FB; --sunk:#F1F4F8; --line:#D4DCE5; --line-2:#BCC8D5;
+  --fg:#17212C; --muted:#5A6878; --faint:#8995A3;
+  --accent:#C9601A; --accent-2:#A94E12; --accent-ink:#FFFFFF; --accent-soft:rgba(201,96,26,.10);
+  --alt:#6A4FC8; --alt-soft:rgba(106,79,200,.10); --good:#1E8A52; --good-soft:rgba(30,138,82,.10); --bad:#C2412F; --bad-soft:rgba(194,65,47,.10);
+  --shadow:0 12px 40px rgba(30,50,80,.16);
+  --r-iron:#5E7894; --r-copper:#C2662C; --r-stone:#A8925E; --r-coal:#5E6873; --r-gold:#C29A14; --r-quartz:#C9579A; --r-sulfur:#A7A31C;
+  --r-bauxite:#B24C33; --r-uranium:#4C9A2E; --r-sam:#7E55CC; --r-oil:#8A6244; --r-nitro:#2E95AB; --r-water:#2F72CF; --r-none:#6E7C8B;
+  color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#EDF1F5; --grid:rgba(40,90,150,.07); --panel:#FFFFFF; --panel-2:#F6F8FB; --sunk:#F1F4F8; --line:#D4DCE5; --line-2:#BCC8D5;
+  --fg:#17212C; --muted:#5A6878; --faint:#8995A3;
+  --accent:#C9601A; --accent-2:#A94E12; --accent-ink:#FFFFFF; --accent-soft:rgba(201,96,26,.10);
+  --alt:#6A4FC8; --alt-soft:rgba(106,79,200,.10); --good:#1E8A52; --good-soft:rgba(30,138,82,.10); --bad:#C2412F; --bad-soft:rgba(194,65,47,.10);
+  --shadow:0 12px 40px rgba(30,50,80,.16);
+  --r-iron:#5E7894; --r-copper:#C2662C; --r-stone:#A8925E; --r-coal:#5E6873; --r-gold:#C29A14; --r-quartz:#C9579A; --r-sulfur:#A7A31C;
+  --r-bauxite:#B24C33; --r-uranium:#4C9A2E; --r-sam:#7E55CC; --r-oil:#8A6244; --r-nitro:#2E95AB; --r-water:#2F72CF; --r-none:#6E7C8B;
+  color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;color:var(--fg);font:14px/1.6 var(--f-body);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;padding:20px 14px;background:var(--panel);border-right:1px solid var(--line)}
+.brand{display:flex;gap:10px;align-items:center;padding:0 6px}
+.mark{width:34px;height:34px;flex:none;border-radius:7px;background:repeating-linear-gradient(-45deg,var(--accent) 0 6px,var(--panel) 6px 12px);box-shadow:inset 0 0 0 2px var(--accent)}
+.brand b{display:block;font:700 17px/1.1 var(--f-display);letter-spacing:.03em}
+.brand span{display:block;font-size:11px;color:var(--muted)}
+.qs{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:1px solid var(--line);background:var(--sunk);border-radius:8px;color:var(--muted);cursor:pointer;text-align:left}
+.qs:hover{border-color:var(--line-2);color:var(--fg)}
+.qs kbd{margin-left:auto;font:500 11px var(--f-display);padding:1px 6px;border:1px solid var(--line-2);border-radius:4px}
+.nav{display:grid;gap:2px}
+.nav button{display:flex;align-items:center;gap:11px;padding:9px 10px;border:0;background:transparent;border-radius:8px;color:var(--muted);cursor:pointer;text-align:left;font-weight:500;position:relative}
+.nav button svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.nav button:hover{color:var(--fg);background:var(--sunk)}
+.nav button[aria-current="page"]{color:var(--fg);background:var(--accent-soft)}
+.nav button[aria-current="page"]::before{content:"";position:absolute;left:-14px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+.nav button[aria-current="page"] svg{stroke:var(--accent)}
+.meter{margin-top:auto;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);display:grid;gap:10px;cursor:pointer;text-align:left;width:100%}
+.meter:hover{border-color:var(--line-2)}
+.meter .t{font-size:11px;color:var(--muted)}
+.meter .v{font:700 26px/1 var(--f-display)}
+.meter .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:3px}
+.meter .row2{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.meter .row2 b{color:var(--fg);font-weight:600}
+.lang{display:flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--sunk)}
+.lang button{flex:1;border:0;background:transparent;border-radius:5px;padding:4px 0;font-size:12px;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--panel-2);color:var(--fg);box-shadow:0 0 0 1px var(--line-2)}
+
+.main{min-width:0;padding:28px clamp(16px,3vw,40px) 64px}
+.view{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;max-width:1240px;margin:0 auto}
+.view>*{min-width:0}
+.view.enter{animation:enter .28s ease-out}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.vhead{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.vhead h1{font:700 clamp(26px,3.2vw,36px)/1.05 var(--f-display);letter-spacing:.01em;margin:0;text-wrap:balance}
+.vhead p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+
+/* ---------- primitives ---------- */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.card>h2,.sec-t{font:600 17px/1.2 var(--f-display);letter-spacing:.02em;margin:0}
+.sec{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.sec small{color:var(--muted);font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center}
+.field{display:grid;gap:5px;min-width:0}
+.field>label,.lbl{font-size:12px;color:var(--muted)}
+select,input[type=number],input[type=text],input[type=search],textarea{font:inherit;color:var(--fg);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;max-width:100%}
+select{appearance:none;-webkit-appearance:none;-moz-appearance:none;background-color:var(--sunk);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238C9BAB' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:10px 6px;padding-right:30px;cursor:pointer;text-overflow:ellipsis}
+select::-ms-expand{display:none}
+option,optgroup{background-color:var(--panel);color:var(--fg)}
+select:hover,input:hover{border-color:var(--line-2)}
+textarea{width:100%;font-size:12px}
+input[type=number]{width:100px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:8px;padding:7px 13px;cursor:pointer;white-space:nowrap;font-weight:500;font-size:13px}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.pri:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:6px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--fg);background:var(--sunk)}
+.sw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;user-select:none}
+.sw input{appearance:none;width:32px;height:18px;border-radius:9px;background:var(--line-2);position:relative;cursor:pointer;margin:0;transition:background .15s}
+.sw input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--fg);transition:transform .15s}
+.sw input:checked{background:var(--accent)}
+.sw input:checked::after{transform:translateX(14px);background:var(--accent-ink)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap;line-height:1.7}
+.p-alt{background:var(--alt-soft);color:var(--alt)}
+.p-std{background:var(--sunk);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.p-good{background:var(--good-soft);color:var(--good)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-acc{background:var(--accent-soft);color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:12px} .nw{white-space:nowrap}
+.num{font-family:var(--f-display);font-weight:600;letter-spacing:.01em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--sunk);border-radius:999px;padding:4px 12px 4px 5px;cursor:pointer;font-size:12px;font-weight:500}
+.chip.plain{padding:4px 12px}
+.chip:hover{border-color:var(--line-2)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+
+/* item glyph: a hex badge tinted by the ore that dominates its chain */
+.gl{--c:var(--r-none);display:inline-grid;place-items:center;flex:none;width:30px;height:30px;font:700 13px/1 var(--f-body);color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%);position:relative}
+.gl.s{width:22px;height:22px;font-size:10px}
+.gl.l{width:52px;height:52px;font-size:22px}
+.gl.raw{background:color-mix(in srgb,var(--c) 30%,transparent)}
+.ilink{display:inline;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:inherit;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.ilink:hover{color:var(--accent);text-decoration-color:var(--accent)}
+
+/* tables */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;font-weight:500;color:var(--muted);background:var(--panel-2);white-space:nowrap}
+th.sort{cursor:pointer;user-select:none} th.sort:hover{color:var(--fg)}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;white-space:nowrap}
+td:first-child{min-width:150px}
+tr.grp td{background:var(--sunk);font:600 13px var(--f-display);letter-spacing:.03em;padding:7px 12px;color:var(--muted)}
+tr.grp td b{color:var(--fg)}
+tr.inplan td{background:var(--good-soft)}
+tr.inplan td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+tr.hot td{background:var(--accent-soft)}
+.flow{display:flex;flex-wrap:wrap;gap:3px 12px}
+.flow span{white-space:nowrap}
+.sub{display:block;font-size:11px;color:var(--muted)}
+.ibar{display:block;height:4px;border-radius:2px;background:var(--line);margin-top:5px;overflow:hidden;min-width:70px}
+.ibar i{display:block;height:100%;border-radius:2px;background:var(--muted);transform-origin:left;animation:grow .5s ease-out}
+.ibar.best i{background:var(--good)}
+@keyframes grow{from{transform:scaleX(0)}}
+.best{color:var(--good)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);max-width:86ch;margin:0}
+
+/* ---------- planner ---------- */
+.orders{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.order{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:10px;min-width:0;flex:0 1 auto}
+.order select{border:0;background-color:transparent;padding:4px 26px 4px 2px;background-position:right 4px center;font-weight:600;max-width:260px}
+.order .u{white-space:nowrap}
+.order input{width:76px;text-align:right;font-family:var(--f-display);font-weight:600}
+.order .u{font-size:12px;color:var(--muted)}
+.order .x{border:0;background:transparent;color:var(--faint);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:16px;line-height:1}
+.order .x:hover{color:var(--bad);background:var(--bad-soft)}
+.add{border:1px dashed var(--line-2);background:transparent;border-radius:10px;padding:8px 16px;color:var(--muted);cursor:pointer;font-weight:500}
+.add:hover{color:var(--accent);border-color:var(--accent)}
+.readout{display:grid;grid-template-columns:1.35fr repeat(3,1fr);border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.readout>div{padding:16px 18px;border-left:1px solid var(--line);min-width:0}
+.readout>div:first-child{border-left:0;background:linear-gradient(135deg,var(--accent-soft),transparent 70%)}
+.readout .k{font-size:12px;color:var(--muted)}
+.readout .v{font:700 clamp(26px,3vw,40px)/1.1 var(--f-display);margin:4px 0 2px;white-space:nowrap}
+.readout .v small{font-size:.45em;color:var(--muted);font-weight:500;margin-left:4px}
+.readout .s{font-size:12px;color:var(--muted)}
+.gauge{height:6px;border-radius:3px;background:var(--sunk);margin-top:10px;overflow:hidden;display:flex}
+.gauge i{display:block;height:100%;transition:width .5s ease}
+@media (max-width:900px){.readout{grid-template-columns:1fr 1fr}.readout>div:nth-child(3){border-left:0}.readout>div:nth-child(n+3){border-top:1px solid var(--line)}}
+
+.graphcard{padding:0;overflow:hidden}
+.graphbar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:4px;border-radius:2px;background:var(--c)}
+.gwrap{overflow:auto;max-height:640px;position:relative;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+.gwrap svg{display:block}
+.gnode rect.b{fill:var(--panel);stroke:var(--line-2);stroke-width:1}
+.gnode.tgt rect.b{stroke:var(--accent);stroke-width:2}
+.gnode.raw rect.b{fill:var(--sunk)}
+.gnode text{fill:var(--fg);font-family:var(--f-body)}
+.gnode text.s{fill:var(--muted)}
+.gnode text.n{font-family:var(--f-display);font-weight:700}
+.gnode{cursor:pointer}
+.gnode:hover rect.b{stroke:var(--accent)}
+.edge .trk{fill:none;stroke-opacity:.18}
+.edge .itm{fill:none;stroke-linecap:round;stroke-dasharray:1.5 11;animation:belt var(--d) linear infinite}
+@keyframes belt{to{stroke-dashoffset:-25}}
+svg.focus .edge,svg.focus .gnode{opacity:.16;transition:opacity .15s}
+svg.focus .edge.on,svg.focus .gnode.on{opacity:1}
+.tip{position:absolute;pointer-events:none;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;padding:6px 10px;font-size:12px;box-shadow:var(--shadow);white-space:nowrap;z-index:5}
+.tip b{font-family:var(--f-display)}
+
+.split{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:1100px){.split{grid-template-columns:minmax(0,1fr)}}
+.rsel{font-size:13px;padding:6px 8px;width:100%;max-width:360px}
+.reclist{display:grid}
+.recrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) 92px auto;gap:8px 14px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
+.recrow:first-child{border-top:0}
+.recrow.ch{background:linear-gradient(90deg,var(--good-soft),transparent 60%);border-radius:8px}
+.recrow .nm{display:flex;gap:10px;align-items:center;min-width:0}
+.recrow .nm div{min-width:0}
+.recrow .st{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.recrow .st b{font:700 15px var(--f-display);color:var(--fg)}
+.recrow.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 2px var(--accent)}100%{box-shadow:0 0 0 2px transparent}}
+@media (max-width:640px){.recrow{grid-template-columns:minmax(0,1fr) auto auto}.recrow .pick{grid-column:1/-1;order:3}}
+.res{display:grid;gap:12px}
+.resrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:baseline}
+.resrow .nm{display:flex;align-items:center;gap:8px;font-weight:500}
+.resrow .amt{font:700 16px var(--f-display)}
+.resrow .bar{grid-column:1/-1;height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.resrow .bar i{display:block;height:100%;border-radius:4px;background:var(--c);transition:width .5s ease}
+.resrow .meta{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.saved{display:grid;gap:6px;margin-top:10px}
+.saved div{display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:8px;background:var(--sunk)}
+.saved span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- tree ---------- */
+.tctl{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
+.order.big{border-color:var(--line-2);background:var(--sunk);padding:10px 12px}
+.order.big select{font:700 18px var(--f-display);max-width:340px}
+.order.big input{width:110px;font-size:18px}
+.tsplit{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+@media (max-width:1100px){.tsplit{grid-template-columns:minmax(0,1fr)}}
+.tree{overflow-x:auto;padding-bottom:4px}
+.tn{position:relative}
+.trow{position:relative;display:grid;grid-template-columns:22px auto minmax(0,1fr) 230px 92px;gap:4px 10px;align-items:center;padding:7px 10px 7px 4px;border-radius:9px;margin:2px 0;min-width:520px;transition:background .12s}
+.trow:hover{background:var(--panel-2)}
+.trow.hl{background:var(--accent-soft);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent)}
+.trow.root{background:linear-gradient(90deg,var(--accent-soft),transparent 75%);padding-block:12px}
+.trow.root .tq b{font-size:24px}
+.trow.flash{animation:flash 1.2s ease-out}
+.tg{width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:0}
+.tg:hover{background:var(--sunk);color:var(--fg)}
+.tg svg{width:12px;height:12px;transition:transform .18s}
+.tg[aria-expanded="true"] svg{transform:rotate(90deg)}
+.tmain{min-width:0}
+.tmain .nmx{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tmain .nmx b{font-weight:600}
+.tmain .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tsel{font-size:12px;padding:5px 28px 5px 9px;width:100%;border-radius:7px}
+.tq{text-align:right;white-space:nowrap;min-width:84px}
+.tq b{font:700 17px var(--f-display)}
+.tq span{font-size:11px;color:var(--muted);margin-left:2px}
+.tkids{margin-left:14px;padding-left:16px;border-left:2px solid color-mix(in srgb,var(--pc) 45%,var(--line))}
+.tkids>.tn>.trow::before{content:"";position:absolute;left:-16px;top:50%;width:14px;height:2px;background:color-mix(in srgb,var(--pc) 45%,var(--line))}
+.tkids>.tn:last-child::after{content:"";position:absolute;left:-18px;top:calc(50% + 1px);bottom:0;width:4px;background:var(--panel)}
+.trow.leaf .tmain b{font-weight:500}
+.tleaf-ext{color:var(--accent)}
+.midrow{display:grid;grid-template-columns:minmax(0,1fr) auto 88px;gap:4px 10px;align-items:center;padding:8px 2px;border-top:1px solid var(--line)}
+.midrow:first-child{border-top:0}
+.midrow .nm{display:flex;gap:8px;align-items:center;min-width:0}
+.midrow .nm>div{min-width:0}
+.midrow .q{text-align:right;white-space:nowrap}
+.midrow .q b{font:700 15px var(--f-display)}
+.midrow input{width:88px;padding:5px 8px;font-size:12px;text-align:right}
+.midrow.hl{background:var(--accent-soft);border-radius:8px}
+.midrow.done .q b{color:var(--good)}
+@media (max-width:640px){.trow{grid-template-columns:22px auto minmax(0,1fr) 84px;min-width:0}.trow .tsel{grid-column:3/-1;grid-row:2;max-width:none}}
+
+/* ---------- compare ---------- */
+.msum{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:6px}
+.mcard h3{margin:0;font:600 15px var(--f-display);display:flex;justify-content:space-between;align-items:baseline}
+.mcard h3 small{font:500 12px var(--f-body);color:var(--muted)}
+.mcard .w{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;font-size:12px}
+.mcard .w span:first-child{color:var(--muted)}
+.mcard .w b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcard .w .num{font-size:13px}
+.scatter text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.scatter .ax{stroke:var(--line-2)}
+.scatter .gd{stroke:var(--line);stroke-dasharray:2 4}
+.scatter .zone{fill:var(--good-soft)}
+.scatter .pt{cursor:pointer}
+.scatter .pt circle{stroke:var(--panel);stroke-width:2;transition:r .15s}
+.scatter .pt:hover circle,.scatter .pt.hot circle{r:10}
+.scatter .pt text.lb{fill:var(--fg);font-size:11.5px;font-weight:500}
+
+/* ---------- items ---------- */
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.itile{display:flex;gap:11px;align-items:center;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;min-width:0}
+.itile:hover{border-color:var(--c,var(--line-2))}
+.itile>div{min-width:0}
+.itile b{display:block;font-weight:600;font-size:13.5px;line-height:1.35}
+.itile>div>span{display:block;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat{font:600 14px var(--f-display);letter-spacing:.03em;color:var(--muted);margin:10px 0 0;display:flex;gap:8px;align-items:baseline}
+.cat small{font:500 12px var(--f-body);color:var(--faint)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(5,10,16,.5);z-index:30;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(600px,100vw);background:var(--panel);border-left:1px solid var(--line);z-index:31;overflow-y:auto;box-shadow:var(--shadow);animation:slide .26s cubic-bezier(.2,.8,.2,1);padding:calc(22px + env(safe-area-inset-top,0px)) 22px calc(40px + env(safe-area-inset-bottom,0px))}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+@media (max-width:700px){.drawer{top:auto;left:0;width:100%;max-height:88vh;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;animation-name:rise}}
+@keyframes rise{from{transform:translateY(40px);opacity:0}}
+.dhead{display:flex;gap:14px;align-items:center}
+.dhead h2{margin:0;font:700 24px/1.15 var(--f-display)}
+.dhead .x{margin-left:auto;align-self:flex-start}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.facts span{padding:5px 10px;border-radius:8px;background:var(--sunk);font-size:12px;color:var(--muted)}
+.facts b{color:var(--fg);font-family:var(--f-display);margin-left:4px}
+.rcard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:8px;background:var(--panel-2)}
+.rcard .top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}
+.rcard .top b{font-weight:600}
+.rcard .io{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;font-size:12.5px}
+.rcard .io .ar{color:var(--faint)}
+.dlist{display:grid;gap:8px;margin-top:10px}
+
+/* palette */
+.pal{position:fixed;left:50%;top:12vh;transform:translateX(-50%);width:min(620px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow);z-index:41;overflow:hidden;animation:pop .18s ease-out}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-6px)}}
+.pal input{width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:16px 18px;font-size:16px}
+.pal input:focus{outline:none}
+.pal ul{list-style:none;margin:0;padding:6px;max-height:52vh;overflow-y:auto}
+.pal li{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer}
+.pal li[aria-selected="true"]{background:var(--accent-soft)}
+.pal li .t{flex:1;min-width:0}
+.pal li .t span{display:block;font-size:11px;color:var(--muted)}
+.pal li .acts{display:flex;gap:4px}
+.pal .hint{padding:8px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+
+/* alts */
+.prog{display:flex;gap:2px;height:10px;margin-top:10px}
+.prog i{flex:1;border-radius:2px;background:var(--line)}
+.prog i.on{background:var(--alt)}
+.altrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:10px 18px;padding:14px 4px;border-top:1px solid var(--line)}
+.altrow:first-child{border-top:0}
+.altrow .nm{display:flex;gap:10px;align-items:flex-start}
+.altrow .alts{display:grid;gap:6px}
+.altitem{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--sunk);cursor:pointer}
+.altitem.on{background:var(--alt-soft)}
+.altitem b{font-weight:600;font-size:13px}
+.altitem span{display:block;font-size:12px;color:var(--muted)}
+@media (max-width:760px){.altrow{grid-template-columns:minmax(0,1fr)}}
+
+/* machines */
+.mbar{display:grid;grid-template-columns:150px minmax(0,1fr) 90px;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.mbar:first-child{border-top:0}
+.mbar .tr{height:14px;border-radius:3px;background:var(--sunk);overflow:hidden;position:relative}
+.mbar .tr i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.mbar .tr i.var{background:repeating-linear-gradient(-45deg,var(--accent) 0 5px,var(--accent-soft) 5px 10px)}
+.mbar .v{text-align:right;font:600 14px var(--f-display)}
+@media (max-width:600px){.mbar{grid-template-columns:100px minmax(0,1fr) 70px}}
+
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:9px;font-size:13px;font-weight:500;z-index:60;box-shadow:var(--shadow);animation:pop2 .2s ease-out;max-width:calc(100vw - 32px)}
+@keyframes pop2{from{opacity:0;transform:translate(-50%,6px)}}
+
+/* ---------- small screens: rail becomes a top bar ---------- */
+@media (max-width:960px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:sticky;top:env(safe-area-inset-top,0px);height:auto;z-index:20;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;border-right:0;border-bottom:1px solid var(--line)}
+  .brand span,.meter{display:none}
+  .brand{margin-right:auto}
+  .qs{width:auto;flex:none;padding:8px 10px}
+  .qs .qt,.qs kbd{display:none}
+  .order{flex:1 1 100%}
+  .order select{flex:1;max-width:none}
+  .lang{order:2}
+  .nav{order:3;width:100%;display:flex;overflow-x:auto;scrollbar-width:none;gap:4px}
+  .nav button{flex:none;padding:7px 11px}
+  .nav button[aria-current="page"]::before{left:8px;right:8px;top:auto;bottom:-1px;width:auto;height:3px;border-radius:3px 3px 0 0}
+  .main{padding-top:20px}
+}
+.msort{display:none;align-items:center;margin-bottom:10px}
+.nav button span{white-space:nowrap}
+@media (max-width:760px){
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:25;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;width:auto;order:0;overflow:visible;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:5px 4px calc(5px + env(safe-area-inset-bottom,0px))}
+  .nav button{flex-direction:column;justify-content:center;gap:3px;padding:6px 0 4px;font-size:10px;font-weight:600;border-radius:8px;min-width:0}
+  .nav button svg{width:21px;height:21px}
+  .nav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .nav button[aria-current="page"]{background:transparent;color:var(--accent)}
+  .nav button[aria-current="page"]::before{left:32%;right:32%;top:-5px;bottom:auto;width:auto;height:3px;border-radius:0 0 3px 3px}
+  .main{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+  .toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+  select,input[type=number],input[type=text],input[type=search],textarea{font-size:16px}
+  .tsel{font-size:15px}
+  .order select{font-size:15px}
+  .vhead h1{font-size:28px}
+  .vhead>.row{width:100%}
+  .vhead>.row input{flex:1}
+  .card{padding:14px}
+  .graphbar{padding:12px 14px}
+  .tkids{margin-left:8px;padding-left:10px}
+  .tkids>.tn>.trow::before{left:-10px;width:8px}
+  .tkids>.tn:last-child::after{left:-12px}
+  .trow{padding-right:4px}
+  .msort{display:flex}
+  #c-out .tbl{border:0;background:transparent}
+  #c-out table,#c-out tbody,#c-out tr,#c-out td{display:block}
+  #c-out thead{display:none}
+  #c-out tr{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:6px 0}
+  #c-out tr.grp{background:transparent;border:0;margin:14px 0 6px;padding:0}
+  #c-out tr.grp td{background:transparent;padding:0 4px}
+  #c-out tr.inplan{box-shadow:inset 3px 0 0 var(--good)}
+  #c-out td{border:0;padding:6px 14px;min-width:0}
+  #c-out td.n{display:grid;grid-template-columns:minmax(0,1fr) auto 80px;gap:10px;align-items:center;text-align:right}
+  #c-out td.n .ibar{margin:0}
+  #c-out td[data-l]::before{content:attr(data-l);font-size:12px;color:var(--muted);text-align:left}
+  #c-out td.n:not(:has(.ibar))::after{content:""}
+  #c-out td:not(.n)[data-l]::before{display:block;margin-bottom:4px}
+  .order{flex-wrap:wrap;row-gap:6px}
+  .order>.gl{order:0}.order>select{order:1;flex:1 1 60%}.order>.x{order:2}
+  .order>input{order:3;margin-left:40px}.order>.u{order:4}.order>.btn{order:5;margin-left:auto}
+  .order.big>select{flex:1 1 calc(100% - 60px)}
+  .order.big>input{margin-left:40px;flex:1 1 0;min-width:0;width:auto}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand"><div class="mark" aria-hidden="true"></div><div><b>FICSIT 生産ノート</b><span id="cnt"></span></div></div>
+    <button class="qs" type="button" id="qs-open"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="qt">アイテムを探す</span><kbd>Ctrl K</kbd></button>
+    <nav class="nav" id="nav" aria-label="画面">
+      <button type="button" data-v="plan"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="6" height="5" rx="1"/><rect x="2" y="15" width="6" height="5" rx="1"/><rect x="16" y="9.5" width="6" height="5" rx="1"/><path d="M8 6.5h3a2 2 0 0 1 2 2V10a2 2 0 0 0 2 2h1M8 17.5h3a2 2 0 0 0 2-2V14a2 2 0 0 1 2-2"/></svg><span>生産計画</span></button>
+      <button type="button" data-v="tree"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M5 17v-3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/></svg><span>部材ツリー</span></button>
+      <button type="button" data-v="compare"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>レシピ比較</span></button>
+      <button type="button" data-v="items"><svg viewBox="0 0 24 24"><path d="M7 3.5 12 1l5 2.5v5L12 11 7 8.5zM2 13.5 7 11l5 2.5v5L7 21l-5-2.5zM12 13.5l5-2.5 5 2.5v5L17 21l-5-2.5z"/></svg><span>アイテム</span></button>
+      <button type="button" data-v="alts"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2c0 4-6 3-10.5 6.3"/></svg><span>代替レシピ</span></button>
+      <button type="button" data-v="machines"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>装置・発電</span></button>
+    </nav>
+    <button class="meter" type="button" id="meter" aria-label="現在の計画を開く">
+      <span class="t" id="m-name">現在の計画</span>
+      <span class="v" id="m-pow">0<small>MW</small></span>
+      <span class="gauge" id="m-gauge" aria-hidden="true"></span>
+      <span class="row2"><span>装置 <b id="m-mc">0</b></span><span>原料 <b id="m-raw">0</b>/分</span></span>
+    </button>
+    <div class="lang" role="group" aria-label="名前の言語"><button type="button" id="lang-ja">日本語</button><button type="button" id="lang-en">English</button></div>
+  </aside>
+
+  <main class="main">
+    <!-- PLAN -->
+    <section class="view" id="v-plan" hidden>
+      <div class="vhead">
+        <div><h1 id="p-title">生産計画</h1><p>作りたいものと量を決めると、工場全体の装置・電力・原料を割り出します。</p></div>
+        <div class="row">
+          <input type="text" id="p-name" placeholder="計画名をつけて保存" aria-label="計画名" style="width:200px">
+          <button class="btn pri" id="p-save" type="button">保存</button>
+        </div>
+      </div>
+      <div>
+        <div class="lbl" style="margin-bottom:6px">出荷するもの（1分あたり）</div>
+        <div class="orders" id="p-targets"></div>
+      </div>
+      <div class="readout" id="p-stats"></div>
+      <div id="p-warn"></div>
+      <div class="card graphcard">
+        <div class="graphbar">
+          <div><span class="sec-t">工場フロー</span> <span class="small muted">左の原料から右の出荷へ。ベルトの太さと速さは流量です。ノードをクリックでレシピ変更へ。</span></div>
+          <div class="legend" id="p-legend"></div>
+        </div>
+        <div class="gwrap" id="p-graph"></div>
+      </div>
+      <div class="split">
+        <div class="card">
+          <div class="sec"><h2 class="sec-t">使うレシピ</h2><div class="row" style="gap:6px"><button class="btn sm" type="button" id="p-ovdef">この選択を既定にする</button><button class="btn sm ghost" type="button" id="p-ovreset">変更をリセット</button></div></div>
+          <p class="note" style="margin-bottom:10px">選ぶとすぐに再計算します。「外部から搬入する」を選ぶと、別の工場から運び込む扱いになります。</p>
+          <div class="reclist" id="p-recipes"></div>
+        </div>
+        <div style="display:grid;gap:20px">
+          <div class="card">
+            <div class="sec"><h2 class="sec-t">原料</h2><small id="p-rawnote"></small></div>
+            <div class="row" style="margin-bottom:14px">
+              <div class="field"><label for="p-miner">採鉱機</label><select id="p-miner"><option value="Desc_MinerMk1_C">Mk.1</option><option value="Desc_MinerMk2_C">Mk.2</option><option value="Desc_MinerMk3_C">Mk.3</option></select></div>
+              <div class="field"><label for="p-purity">ノード純度</label><select id="p-purity"><option value="0.5">不純</option><option value="1">普通</option><option value="2">純粋</option></select></div>
+              <label class="sw" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="p-expow"> 採掘の電力を含める</label>
+            </div>
+            <div class="res" id="p-raw"></div>
+          </div>
+          <div class="card">
+            <div class="sec"><h2 class="sec-t">余剰・副産物</h2></div>
+            <div id="p-surplus"></div>
+          </div>
+          <div class="card">
+            <div class="sec"><h2 class="sec-t">保存した計画</h2></div>
+            <div class="saved" id="p-saved"></div>
+          </div>
+        </div>
+      </div>
+      <details class="card">
+        <summary class="sec-t" style="cursor:pointer">生産ラインの明細</summary>
+        <div class="tbl" style="margin-top:12px" id="p-lines"></div>
+        <p class="note" style="margin-top:10px">台数は小数で表示しています（2.4台 = 2台を100%、1台を40%）。電力は台数に比例して計算しています。クロックを下げた装置は消費電力が1.32乗で下がるため、実際は表示よりやや少なくなります。</p>
+      </details>
+    </section>
+
+    <!-- TREE -->
+    <section class="view" id="v-tree" hidden>
+      <div class="vhead">
+        <div><h1>部材ツリー</h1><p>ひとつのものを決まった個数だけ作るとき、何がどれだけ要るかを原料まで分解します。各段のレシピはその場で切り替えられます。</p></div>
+      </div>
+      <div class="card tctl">
+        <div class="order big"><span id="t-gl"></span><select id="t-item" aria-label="作るもの"></select><input type="number" id="t-qty" min="0" step="any" aria-label="個数"><span class="u" id="t-unit">個</span></div>
+        <div class="row" style="gap:8px 16px">
+          <label class="sw"><input type="checkbox" id="t-ceil"> 製作回数を切り上げる</label>
+          <span class="row" style="gap:6px"><button class="btn sm" type="button" id="t-open">すべて開く</button><button class="btn sm ghost" type="button" id="t-close">原料だけたたむ</button><button class="btn sm ghost" type="button" id="t-copy">テキストでコピー</button></span>
+        </div>
+      </div>
+      <div class="readout" id="t-stats"></div>
+      <div class="split tsplit">
+        <div class="card">
+          <div class="sec"><h2 class="sec-t">分解ツリー</h2><div class="row" style="gap:6px"><button class="btn sm" type="button" id="t-ovdef">この選択を既定にする</button><button class="btn sm ghost" type="button" id="t-ovplan">計画にも反映</button><button class="btn sm ghost" type="button" id="t-ovreset">変更をリセット</button></div></div>
+          <p class="note" style="margin-bottom:12px">数字は「その行のために必要な量」です。行にカーソルを乗せると、同じ素材が使われている箇所がすべて光ります。レシピの変更は、ツリー内の同じ素材すべてに反映されます。</p>
+          <div class="tree" id="t-tree"></div>
+        </div>
+        <div style="display:grid;gap:20px">
+          <div class="card"><div class="sec"><h2 class="sec-t">原料の合計</h2><small id="t-rawnote"></small></div><div class="res" id="t-raw"></div></div>
+          <div class="card"><div class="sec"><h2 class="sec-t">作る中間素材</h2><small>手持ちを入れると不足分だけ計算</small></div><div id="t-mid"></div></div>
+          <div class="card" id="t-bycard"><div class="sec"><h2 class="sec-t">副産物</h2></div><div id="t-by"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPARE -->
+    <section class="view" id="v-compare" hidden>
+      <div class="vhead">
+        <div><h1>レシピ比較</h1><p>同じ量を作るとき、どのレシピが電力と資源を節約できるか。中間素材は既定のレシピで原料までさかのぼって計算します。</p></div>
+      </div>
+      <div class="card" style="display:grid;gap:14px">
+        <div class="row" style="align-items:end">
+          <div class="field" style="flex:1 1 240px"><label for="c-item">アイテム</label><select id="c-item"></select></div>
+          <div class="field"><label for="c-rate">生産量 /分</label><input type="number" id="c-rate" min="0.01" step="any"></div>
+          <label class="sw" style="padding-bottom:8px"><input type="checkbox" id="c-group"> 装置ごとにまとめる</label>
+          <label class="sw" style="padding-bottom:8px"><input type="checkbox" id="c-unl"> 解禁済みだけ</label>
+          <label class="sw" style="padding-bottom:8px"><input type="checkbox" id="c-water"> 水を資源に含める</label>
+        </div>
+        <div class="chips" id="c-quick"></div>
+      </div>
+      <div class="msum" id="c-sum"></div>
+      <div class="card" id="c-plotcard">
+        <div class="sec"><h2 class="sec-t">電力 × 資源</h2><small>左下ほど省電力・省資源。点を押すと表の該当行へ。</small></div>
+        <div id="c-plot"></div>
+      </div>
+      <div id="c-out"></div>
+      <p class="note">資源比率は、必要な原料をマップ全体の最大採掘量（全ノードを採鉱機Mk.3・250%で掘った量）で割った合計です。「搬入品あり」は中間素材を外から持ち込む前提の値なので、最良の判定から外しています。粒子加速器・変換機・量子エンコーダーの電力は変動幅の平均です。</p>
+    </section>
+
+    <!-- ITEMS -->
+    <section class="view" id="v-items" hidden>
+      <div class="vhead">
+        <div><h1>アイテム</h1><p>生産に関わる全アイテム。色は、そのアイテムを作るのに一番多く使う鉱石です。</p></div>
+        <div class="field" style="flex:0 1 300px"><label for="isearch">絞り込み</label><input type="search" id="isearch" placeholder="鋼梁、rotor、燃料…"></div>
+      </div>
+      <div class="chips" id="icats"></div>
+      <div id="igrid" style="display:grid;gap:10px"></div>
+    </section>
+
+    <!-- ALTS -->
+    <section class="view" id="v-alts" hidden>
+      <div class="vhead">
+        <div><h1>代替レシピ</h1><p>ハードドライブで手に入れた代替レシピを記録し、アイテムごとに既定で使うレシピを決めます。設定はこのブラウザに保存されます。</p></div>
+      </div>
+      <div class="card">
+        <div class="sec"><h2 class="sec-t" id="a-count"></h2><div class="row" style="gap:6px"><button class="btn sm" id="a-allon" type="button">すべて解禁</button><button class="btn sm ghost" id="a-alloff" type="button">すべて未解禁</button><button class="btn sm ghost" id="a-reset" type="button">既定レシピを初期化</button></div></div>
+        <div class="prog" id="a-prog" aria-hidden="true"></div>
+      </div>
+      <div class="row">
+        <input type="search" id="a-search" placeholder="アイテム名・レシピ名で絞り込み" aria-label="絞り込み" style="flex:1 1 240px">
+        <div class="chips" id="a-filter"></div>
+      </div>
+      <div class="card" id="a-list"></div>
+      <div class="card">
+        <div class="sec"><h2 class="sec-t">設定のバックアップ</h2></div>
+        <p class="note">解禁状況・既定レシピ・保存した計画をまとめた文字列です。別の端末で「読み込む」に貼り付けると復元できます。</p>
+        <div class="row" style="margin:10px 0"><button class="btn" id="x-export" type="button">書き出してコピー</button><button class="btn" id="x-import" type="button">貼り付けた内容を読み込む</button></div>
+        <textarea id="x-text" rows="3" aria-label="設定データ"></textarea>
+      </div>
+    </section>
+
+    <!-- MACHINES -->
+    <section class="view" id="v-machines" hidden>
+      <div class="vhead"><div><h1>装置・発電</h1><p>生産装置の消費電力、採掘速度、発電機ごとの燃料消費量。</p></div></div>
+      <div class="card"><div class="sec"><h2 class="sec-t">生産装置の消費電力</h2><small>斜線は変動電力（最小〜最大）</small></div><div id="m-prod"></div></div>
+      <div class="card"><div class="sec"><h2 class="sec-t">採掘装置</h2></div><div class="tbl" id="m-ext"></div></div>
+      <div class="card"><div class="sec"><h2 class="sec-t">発電機と燃料</h2></div><div class="tbl" id="m-gen"></div></div>
+      <p class="note">データはゲーム本体のデータファイル（Docs.json）を抽出した SatisfactoryTools のもの（v1.0）。パッチ1.1では生産レシピと装置の数値に変更はありません。日本語名はゲーム内表記に合わせ、一部は独自訳です。Satisfactory は Coffee Stain Studios の作品で、このツールは非公式のファンメイドです。ソースコードとライセンス: <a href="https://github.com/kyokach/sf-simulator" target="_blank" rel="noopener" style="color:var(--accent)">github.com/kyokach/sf-simulator</a>（MIT）</p>
+    </section>
+  </main>
+</div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script id="gamedata" type="application/json">__DATA__</script>
+<script>
+(function(){
+"use strict";
+const D=JSON.parse(document.getElementById('gamedata').textContent);
+const I=D.items,R=D.recipes,M=D.machines,G=D.generators,MN=D.miners;
+const WORLD={Desc_OreIron_C:92100,Desc_OreCopper_C:36900,Desc_Stone_C:69900,Desc_Coal_C:42300,Desc_OreGold_C:15000,Desc_LiquidOil_C:12600,Desc_RawQuartz_C:13500,Desc_Sulfur_C:10800,Desc_OreBauxite_C:12300,Desc_OreUranium_C:2100,Desc_NitrogenGas_C:12000,Desc_SAM_C:10200};
+const RAW_ORDER=['Desc_OreIron_C','Desc_OreCopper_C','Desc_Stone_C','Desc_Coal_C','Desc_OreGold_C','Desc_RawQuartz_C','Desc_Sulfur_C','Desc_OreBauxite_C','Desc_OreUranium_C','Desc_SAM_C','Desc_LiquidOil_C','Desc_NitrogenGas_C','Desc_Water_C'];
+const RCOL={Desc_OreIron_C:'iron',Desc_OreCopper_C:'copper',Desc_Stone_C:'stone',Desc_Coal_C:'coal',Desc_OreGold_C:'gold',Desc_RawQuartz_C:'quartz',Desc_Sulfur_C:'sulfur',Desc_OreBauxite_C:'bauxite',Desc_OreUranium_C:'uranium',Desc_SAM_C:'sam',Desc_LiquidOil_C:'oil',Desc_NitrogenGas_C:'nitro',Desc_Water_C:'water'};
+const MACH_ORDER=['Desc_SmelterMk1_C','Desc_ConstructorMk1_C','Desc_AssemblerMk1_C','Desc_FoundryMk1_C','Desc_ManufacturerMk1_C','Desc_OilRefinery_C','Desc_Packager_C','Desc_Blender_C','Desc_HadronCollider_C','Desc_Converter_C','Desc_QuantumEncoder_C'];
+const QUICK=['Desc_IronIngot_C','Desc_CopperIngot_C','Desc_GoldIngot_C','Desc_SteelIngot_C','Desc_AluminumIngot_C','Desc_IronPlate_C','Desc_Wire_C','Desc_IronScrew_C','Desc_Cement_C','Desc_Plastic_C','Desc_Rubber_C','Desc_CircuitBoard_C','Desc_LiquidFuel_C'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=(n,d=2)=>{if(!isFinite(n))return '—';const a=Math.abs(n);if(a>0&&a<0.0001)return n.toExponential(1);if(a<0.1&&d<4)d=4;return n.toLocaleString('ja-JP',{maximumFractionDigits:a>=1000?0:d})};
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- state ---------- */
+const KEY='ficsit-note-v1';
+const DEF_PLAN=()=>({targets:[{item:'Desc_ModularFrameHeavy_C',rate:5},{item:'Desc_Computer_C',rate:2.5}],over:{},miner:'Desc_MinerMk2_C',purity:1,expow:true});
+let S={lang:'ja',tab:'plan',unl:{},pref:{},plans:{},cur:DEF_PLAN(),curName:'',cItem:'Desc_IronIngot_C',cRate:60,cWater:false,cUnl:false,cGroup:true,icat:'all',afilter:'all'};
+try{const t=JSON.parse(localStorage.getItem(KEY)||'null');if(t)S=Object.assign(S,t);}catch(e){}
+if(!S.cur||!Array.isArray(S.cur.targets))S.cur=DEF_PLAN();
+if(!S.cur.over)S.cur.over={};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;t.style.animation='none';void t.offsetWidth;t.style.animation='';clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2200);}
+
+/* ---------- names ---------- */
+const nm=id=>I[id]?(S.lang==='ja'?I[id].j:I[id].n):id;
+const nm2=id=>I[id]?(S.lang==='ja'?I[id].n:I[id].j):'';
+const mn=id=>M[id]?(S.lang==='ja'?M[id].j:M[id].n):id;
+function rn(rid){const r=R[rid];if(!r)return '';let n=r.n;
+  if(!r.a&&S.lang==='ja'){const o=r.o.find(([x])=>I[x]&&I[x].n===n);if(o)return I[o[0]].j;}
+  if(r.a){n=n.replace(/^Alternate:\s*/,'');return (S.lang==='ja'?'代替: ':'Alt: ')+n;}return n;}
+const unit=id=>I[id]&&I[id].l?'m³':'個';
+const isRaw=id=>!!(I[id]&&I[id].r);
+
+/* ---------- recipe index ---------- */
+const producers={},consumers={};
+for(const [rid,r] of Object.entries(R)){
+  r.o.forEach(([it])=>{(producers[it]=producers[it]||[]).push(rid);});
+  r.i.forEach(([it])=>{(consumers[it]=consumers[it]||[]).push(rid);});
+}
+const isPrimary=(rid,it)=>R[rid].o[0][0]===it;
+for(const it in producers){producers[it].sort((a,b)=>(isPrimary(b,it)-isPrimary(a,it))||(R[a].a-R[b].a)||R[a].n.localeCompare(R[b].n));}
+const defaults={};
+for(const it in I){
+  if(isRaw(it)){defaults[it]=null;continue;}
+  const c=(producers[it]||[]).filter(r=>isPrimary(r,it)&&!R[r].a&&R[r].m!=='Desc_Converter_C'&&!/^Unpackage|^Residual/.test(R[r].n));
+  const prim=(producers[it]||[]).filter(r=>isPrimary(r,it)&&!/^Unpackage/.test(R[r].n));
+  defaults[it]=c.find(r=>R[r].n===I[it].n)||c[0]||prim.find(r=>!R[r].a)||prim.find(r=>R[r].a&&R[r].u&&R[r].u[0]==='mam')||null;
+}
+const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+function effRecipe(it,over){
+  if(over&&has(over,it))return over[it]||null;
+  if(has(S.pref,it))return S.pref[it]||null;
+  return defaults[it];
+}
+const perMin=(r,amt)=>amt*60/r.t;
+function net(r,it){let n=0;for(const [x,a] of r.o)if(x===it)n+=a;for(const [x,a] of r.i)if(x===it)n-=a;return n*60/r.t;}
+const unlocked=rid=>!R[rid].a||!!S.unl[rid];
+const isLocked=rid=>R[rid].a&&!S.unl[rid]&&!(R[rid].u&&R[rid].u[0]==='mam');
+
+/* ---------- solver ---------- */
+function solve(targets,choose){
+  const rec={},order=[],used=new Set(),seen=new Set(),q=Object.keys(targets);
+  while(q.length){const it=q.shift();if(seen.has(it))continue;seen.add(it);
+    const r=choose(it);if(!r||!R[r]||used.has(r))continue;used.add(r);rec[it]=r;order.push(it);
+    for(const [x] of R[r].i)q.push(x);}
+  let ex=new Set(),x={},items=[];
+  for(let iter=0;iter<30;iter++){
+    items=order.filter(i=>!ex.has(i));
+    const A=items.map(k=>items.map(j=>net(R[rec[j]],k)));
+    const b=items.map(k=>targets[k]||0);
+    const sol=gauss(A,b);
+    if(!sol)return {error:'このレシピの組み合わせでは計算できません。循環しているレシピのどれかを別のレシピか「外部から搬入する」に変えてください。'};
+    const neg=items.filter((it,ix)=>sol[ix]<-1e-9);
+    x={};items.forEach((it,ix)=>x[rec[it]]=Math.max(0,sol[ix]));
+    if(!neg.length)break;neg.forEach(i=>ex.add(i));
+  }
+  const rec2={};for(const it of items)rec2[it]=rec[it];
+  const prod={},cons={};
+  for(const [rid,m] of Object.entries(x)){if(m<1e-12)continue;const r=R[rid];
+    for(const [it,a] of r.o)prod[it]=(prod[it]||0)+perMin(r,a)*m;
+    for(const [it,a] of r.i)cons[it]=(cons[it]||0)+perMin(r,a)*m;}
+  const all=new Set([...Object.keys(prod),...Object.keys(cons),...Object.keys(targets)]);
+  const inputs={},surplus={};
+  for(const it of all){const bal=(prod[it]||0)-(cons[it]||0)-(targets[it]||0);
+    if(bal<-1e-7)inputs[it]=-bal;else if(bal>1e-7)surplus[it]=bal;}
+  let power=0,mcount=0;for(const [rid,m] of Object.entries(x)){power+=R[rid].p*m;mcount+=m;}
+  return {rec:rec2,x,prod,cons,inputs,surplus,power,mcount,items};
+}
+function gauss(A,b){const n=b.length;const Mx=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(Mx[r][c])>Math.abs(Mx[p][c]))p=r;
+    if(Math.abs(Mx[p][c])<1e-12)return null;[Mx[c],Mx[p]]=[Mx[p],Mx[c]];
+    for(let r=0;r<n;r++){if(r===c)continue;const f=Mx[r][c]/Mx[c][c];if(f)for(let k=c;k<=n;k++)Mx[r][k]-=f*Mx[c][k];}}
+  return Mx.map((r,i)=>r[n]/r[i]);}
+function resScore(inputs,water){let s=0,t=0;for(const [it,a] of Object.entries(inputs)){if(!isRaw(it))continue;if(it==='Desc_Water_C'&&!water)continue;t+=a;if(WORLD[it])s+=a/WORLD[it]*100;}return {score:s,total:t};}
+
+/* ---------- item colour = dominant ore of its default chain ---------- */
+const ICOL={};
+function itemColor(it){
+  if(ICOL[it])return ICOL[it];
+  let c='none';
+  if(RCOL[it])c=RCOL[it];
+  else if((producers[it]||[]).length){
+    const r=solve({[it]:1},x=>effRecipe(x));
+    if(!r.error){let best=0;for(const [k,a] of Object.entries(r.inputs)){if(!RCOL[k]||k==='Desc_Water_C')continue;const w=WORLD[k]?a/WORLD[k]:0;if(w>best){best=w;c=RCOL[k];}}
+      if(c==='none'&&r.inputs.Desc_Water_C)c='water';}
+  }
+  return ICOL[it]='var(--r-'+c+')';
+}
+const glyph=(it,cls='')=>`<span class="gl ${cls}${isRaw(it)?' raw':''}" style="--c:${itemColor(it)}" aria-hidden="true">${esc((I[it]?(S.lang==='ja'?I[it].j:I[it].n):'?').replace(/^(包装済み|容器入り|空の)/,'').charAt(0))}</span>`;
+
+/* ---------- shared bits ---------- */
+const ilink=(id,txt)=>`<button type="button" class="ilink" data-item="${id}">${esc(txt||nm(id))}</button>`;
+function flowList(arr,r,mult=1){return '<div class="flow">'+arr.map(([it,a])=>`<span><span class="num">${fmt(perMin(r,a)*mult)}</span> ${ilink(it)}</span>`).join('')+'</div>';}
+function unlockPill(rid){const r=R[rid];if(!r.u)return '';const [t,tier]=r.u;
+  if(t==='hdd')return `<span class="pill p-alt">ハードドライブ</span>`;
+  if(t==='mam')return `<span class="pill p-acc">MAM</span>`;
+  if(t==='tier')return `<span class="pill p-std">Tier ${tier}</span>`;
+  return `<span class="pill p-std">AWESOMEショップ</span>`;}
+function altPill(rid){return R[rid].a?(S.unl[rid]?'<span class="pill p-good">解禁済</span>':'<span class="pill p-alt">代替</span>'):'';}
+const CATS=[['raw','天然資源',it=>isRaw(it)],['fluid','液体・気体',it=>I[it].l&&!isRaw(it)],['elev','軌道エレベーター部品',it=>/SpaceElevatorPart/.test(it)],
+  ['fuel','燃料・原子力',it=>/Fuel|Nuclear|Uranium|Plutonium|Ficsonium|Waste|ControlRod|Biofuel|Compacted|Canister|GasTank|Packaged/.test(it)],
+  ['gear','装備・弾薬',it=>/Rebar|Cartridge|Nobelisk|Gunpowder|Filter|Beacon|PortableMiner/.test(it)],
+  ['bio','生物・エイリアン',it=>/Parts_C|Alien|Leaves|Mycelia|Flower|Wood|Biomass|Crystal_|CrystalShard/.test(it)],['part','部品・素材',()=>true]];
+let _gcache=null,_glang=null;
+function groupItems(){
+  if(_gcache&&_glang===S.lang)return _gcache;
+  const done=new Set();
+  _gcache=CATS.map(([key,name,f])=>{const items=Object.keys(I).filter(it=>!done.has(it)&&f(it));items.forEach(i=>done.add(i));
+    if(key==='raw')items.sort((a,b)=>RAW_ORDER.indexOf(a)-RAW_ORDER.indexOf(b));else items.sort((a,b)=>nm(a).localeCompare(nm(b),'ja'));return {key,name,items};});
+  _glang=S.lang;return _gcache;
+}
+function itemOptions(sel,filter){
+  return groupItems().filter(g=>g.items.some(filter)).map(g=>`<optgroup label="${esc(g.name)}">`+g.items.filter(filter).map(it=>`<option value="${it}"${it===sel?' selected':''}>${esc(nm(it))}</option>`).join('')+'</optgroup>').join('');}
+const producible=it=>(producers[it]||[]).length>0;
+
+/* number tween: answers a change the person just made */
+function tween(el,to,f){
+  const from=+el.dataset.v||0;el.dataset.v=to;
+  if(reduceMotion||!isFinite(from)||Math.abs(to-from)<1e-9){el.firstChild.nodeValue=f(to);return;}
+  const t0=performance.now(),dur=520;
+  cancelAnimationFrame(el._raf);
+  const step=t=>{const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.firstChild.nodeValue=f(from+(to-from)*e);if(p<1)el._raf=requestAnimationFrame(step);};
+  el._raf=requestAnimationFrame(step);
+}
+
+/* ================= PLAN ================= */
+function planSolve(P=S.cur){const t={};
+  for(const x of P.targets){if(!I[x.item])continue;const v=+x.rate;if(v>0)t[x.item]=(t[x.item]||0)+v;}
+  return {t,res:solve(t,it=>effRecipe(it,P.over))};}
+function extraction(res,P){
+  const minerRate=MN[P.miner].pm*P.purity,minerP=M[P.miner].p;let pow=0;const info={};
+  for(const [it,a] of Object.entries(res.inputs)){if(!isRaw(it))continue;
+    let n,mach,p=0;
+    if(it==='Desc_Water_C'){n=a/120;mach=mn('Desc_WaterPump_C');p=n*20;}
+    else if(it==='Desc_LiquidOil_C'){n=a/(120*P.purity);mach=mn('Desc_OilPump_C');p=n*40;}
+    else if(it==='Desc_NitrogenGas_C'){n=a/(60*P.purity);mach=mn('Desc_FrackingExtractor_C');}
+    else{n=a/minerRate;mach=mn(P.miner);p=n*minerP;}
+    pow+=p;info[it]={n,mach};}
+  return {pow,info};
+}
+function renderMeter(){
+  const {res}=planSolve();const box=$('#meter');
+  if(res.error){$('#m-pow').firstChild.nodeValue='—';return;}
+  const ex=extraction(res,S.cur);const tot=res.power+(S.cur.expow?ex.pow:0);
+  $('#m-name').textContent=S.curName?`計画: ${S.curName}`:'現在の計画';
+  tween($('#m-pow'),tot,v=>fmt(v,0));
+  $('#m-mc').textContent=fmt(res.mcount,0);$('#m-raw').textContent=fmt(resScore(res.inputs,false).total,0);
+  $('#m-gauge').innerHTML=gaugeSegs(res);
+}
+function gaugeSegs(res){
+  const by={};for(const [rid,m] of Object.entries(res.x)){const mm=R[rid].m;by[mm]=(by[mm]||0)+R[rid].p*m;}
+  const tot=Object.values(by).reduce((a,b)=>a+b,0)||1;
+  const cols=['var(--accent)','var(--r-iron)','var(--r-gold)','var(--r-copper)','var(--alt)','var(--r-nitro)','var(--r-uranium)','var(--r-quartz)','var(--r-oil)','var(--r-sam)','var(--r-water)'];
+  return MACH_ORDER.filter(m=>by[m]).map(m=>`<i style="width:${by[m]/tot*100}%;background:${cols[MACH_ORDER.indexOf(m)]}" title="${esc(mn(m))} ${fmt(by[m],0)} MW"></i>`).join('');
+}
+function renderPlan(){
+  const P=S.cur;
+  $('#p-title').textContent=S.curName||'生産計画';
+  $('#p-name').value=S.curName||'';
+  $('#p-targets').innerHTML=P.targets.map((x,i)=>`<div class="order">${glyph(x.item)}<select data-ti="${i}" aria-label="出荷するアイテム">${itemOptions(x.item,producible)}</select><input type="number" data-tr="${i}" min="0" step="any" value="${x.rate}" aria-label="1分あたりの量"><span class="u">${unit(x.item)}/分</span><button class="btn sm ghost" type="button" data-totree="${x.item}" data-q="${x.rate}" title="1分ぶんの部材をツリーで見る">ツリー</button><button class="x" type="button" data-tdel="${i}" aria-label="${esc(nm(x.item))}を外す">×</button></div>`).join('')+`<button class="add" type="button" id="p-add">＋ 追加</button>`;
+  $('#p-miner').value=P.miner;$('#p-purity').value=String(P.purity);$('#p-expow').checked=P.expow;
+  renderSaved();
+  const {t,res}=planSolve();
+  if(res.error){$('#p-warn').innerHTML=`<div class="card"><span class="pill p-bad">計算できません</span> ${esc(res.error)}</div>`;['#p-lines','#p-raw','#p-surplus','#p-graph','#p-recipes'].forEach(s=>$(s).innerHTML='');renderMeter();return;}
+  $('#p-warn').innerHTML='';
+  const ex=extraction(res,P);
+  const lines=Object.entries(res.rec).filter(([,rid])=>res.x[rid]>1e-9);
+  // readout
+  const sc=resScore(res.inputs,false);const total=res.power+(P.expow?ex.pow:0);
+  const ceilN=lines.reduce((s,[,rid])=>s+Math.ceil(res.x[rid]-1e-9),0);
+  const statDefs=[
+    ['pow','消費電力',total,v=>fmt(v,0),'MW',`燃料式発電機なら ${fmt(Math.ceil(total/250),0)} 台分`+(P.expow?` ・ うち採掘 ${fmt(ex.pow,0)} MW`:''),true],
+    ['mc','生産装置',res.mcount,v=>fmt(v,1),'台',`建てる台数 ${ceilN} 台`],
+    ['raw','原料',sc.total,v=>fmt(v,0),'/分',`${Object.keys(res.inputs).filter(k=>isRaw(k)&&k!=='Desc_Water_C').length} 種類（水を除く）`],
+    ['sc','資源比率',sc.score,v=>fmt(v,2),'%','マップの最大採掘量に対する割合']];
+  const box=$('#p-stats');
+  if(!box.children.length)box.innerHTML=statDefs.map(d=>`<div><div class="k">${d[1]}</div><div class="v" id="st-${d[0]}">0<small>${d[4]}</small></div><div class="s" id="ss-${d[0]}"></div>${d[6]?'<div class="gauge" id="st-gauge"></div>':''}</div>`).join('');
+  statDefs.forEach(d=>{tween($('#st-'+d[0]),d[2],d[3]);$('#ss-'+d[0]).textContent=d[5];});
+  $('#st-gauge').innerHTML=gaugeSegs(res);
+  // graph
+  renderGraph(res,t);
+  // recipe chooser
+  const recOpts=(it,cur)=>`<option value=""${!cur?' selected':''}>外部から搬入する</option>`+(producers[it]||[]).map(rid=>`<option value="${rid}"${rid===cur?' selected':''}>${esc(rn(rid))}（${esc(mn(R[rid].m))}）${isLocked(rid)?' 未解禁':''}</option>`).join('');
+  const touched=new Set([...Object.keys(res.rec),...Object.keys(res.inputs).filter(k=>!isRaw(k)&&producible(k)),...Object.keys(P.over)]);
+  const mo=k=>{const r=effRecipe(k,P.over);return r?MACH_ORDER.indexOf(R[r].m):99;};
+  const tl=[...touched].filter(k=>I[k]&&!isRaw(k)).sort((a,b)=>(t[b]?1:0)-(t[a]?1:0)||mo(b)-mo(a)||nm(a).localeCompare(nm(b),'ja'));
+  $('#p-recipes').innerHTML=tl.map(it=>{
+    const cur=effRecipe(it,P.over),ch=has(P.over,it),nalt=(producers[it]||[]).filter(r=>R[r].a).length;
+    const st=cur&&res.x[cur]>1e-9?`<b>${fmt(res.x[cur])}</b> 台<span class="sub">${esc(mn(R[cur].m))}</span>`:(!cur||res.inputs[it]?`<span class="pill p-acc">搬入 ${fmt(res.inputs[it]||0,1)}/分</span>`:'<span class="muted">未使用</span>');
+    return `<div class="recrow${ch?' ch':''}" id="rr-${it}"><div class="nm">${glyph(it)}<div>${ilink(it)}${t[it]?' <span class="pill p-acc">出荷</span>':''}<span class="sub">${(producers[it]||[]).length} レシピ${nalt?` ・ 代替 ${nalt}`:''}${ch?' ・ <span style="color:var(--good)">この計画で変更</span>':''}</span></div></div>
+      <div class="pick"><select class="rsel" data-ov="${it}" aria-label="${esc(nm(it))}のレシピ">${recOpts(it,cur)}</select></div>
+      <div class="st">${st}</div><button class="btn sm ghost" type="button" data-cmpitem="${it}">比較</button></div>`}).join('');
+  // raw
+  const rawIn=Object.entries(res.inputs).sort((a,b)=>(isRaw(b[0])-isRaw(a[0]))||RAW_ORDER.indexOf(a[0])-RAW_ORDER.indexOf(b[0]));
+  const maxA=Math.max(1,...rawIn.filter(([k])=>k!=='Desc_Water_C').map(([,a])=>a));
+  $('#p-rawnote').textContent=`${mn(P.miner)}・${({0.5:'不純',1:'普通',2:'純粋'})[P.purity]}ノード`;
+  $('#p-raw').innerHTML=rawIn.length?rawIn.map(([it,a])=>{const e=ex.info[it];const pct=WORLD[it]?a/WORLD[it]*100:null;
+    return `<div class="resrow"><span class="nm">${glyph(it,'s')}${ilink(it)}</span><span class="amt">${fmt(a,1)}<small class="muted" style="font-size:12px;font-weight:500"> ${unit(it)}/分</small></span>
+    <span class="bar"><i style="width:${Math.min(100,a/maxA*100)}%;--c:${itemColor(it)}"></i></span>
+    <span class="meta">${e?`${esc(e.mach)} ${fmt(e.n,1)} 台`:'<span class="pill p-acc">外部から搬入</span>'}${pct!==null?` ・ マップの ${fmt(pct,2)}%`:''}</span></div>`}).join(''):'<div class="empty">原料は不要です。</div>';
+  const sur=Object.entries(res.surplus);
+  $('#p-surplus').innerHTML=sur.length?`<div class="res">`+sur.map(([it,a])=>`<div class="resrow"><span class="nm">${glyph(it,'s')}${ilink(it)}</span><span class="amt">${fmt(a,1)}<small class="muted" style="font-size:12px;font-weight:500"> ${unit(it)}/分</small></span><span class="meta">${I[it].l?'液体はシンクに入れられません':`シンクに入れると ${fmt(a*I[it].s,0)} pt/分`}</span></div>`).join('')+'</div>':'<div class="muted small">余剰は出ません。</div>';
+  // lines
+  lines.sort((a,b)=>MACH_ORDER.indexOf(R[a[1]].m)-MACH_ORDER.indexOf(R[b[1]].m)||nm(a[0]).localeCompare(nm(b[0]),'ja'));
+  $('#p-lines').innerHTML=`<table><thead><tr><th>アイテム</th><th>レシピ</th><th>装置</th><th class="n">台数</th><th class="n">電力 MW</th><th class="n">生産 /分</th><th>入力 /分</th></tr></thead><tbody>`+lines.map(([it,rid])=>{const r=R[rid],m=res.x[rid];
+    return `<tr><td>${ilink(it)}${t[it]?' <span class="pill p-acc">出荷</span>':''}</td><td>${esc(rn(rid))} ${R[rid].a?'<span class="pill p-alt">代替</span>':''}</td><td class="nw">${esc(mn(r.m))}</td><td class="n"><span class="num">${fmt(m)}</span><span class="sub">${Math.ceil(m-1e-9)}台</span></td><td class="n">${fmt(r.p*m,1)}</td><td class="n">${fmt(perMin(r,r.o[0][1])*m)}</td><td class="small">${flowList(r.i,r,m)}</td></tr>`}).join('')+'</tbody></table>';
+  renderMeter();
+}
+function renderSaved(){
+  const names=Object.keys(S.plans);
+  $('#p-saved').innerHTML=names.length?names.map(n=>{const pr=planSolve(S.plans[n]).res;
+    return `<div><span>${esc(n)}<span class="sub">${pr.error?'—':fmt(pr.power,0)+' MW ・ '+S.plans[n].targets.map(x=>nm(x.item)).join('、')}</span></span><button class="btn sm" type="button" data-pload="${esc(n)}">開く</button><button class="btn sm ghost" type="button" data-pdel="${esc(n)}">削除</button></div>`}).join(''):'<span class="muted small">名前をつけて保存すると、ここから切り替えられます。</span>';
+}
+
+/* ---------- flow graph ---------- */
+function renderGraph(res,t){
+  const wrap=$('#p-graph');
+  const nodes=[],byId={};
+  const add=n=>{byId[n.id]=n;nodes.push(n);return n;};
+  for(const [it,rid] of Object.entries(res.rec)){const m=res.x[rid];if(m>1e-9)add({id:'L:'+it,type:'line',item:it,rid,m});}
+  for(const [it,a] of Object.entries(res.inputs))add({id:'I:'+it,type:'in',item:it,amt:a});
+  const supply={};
+  for(const n of nodes){
+    if(n.type==='line'){for(const [k,a] of R[n.rid].o)(supply[k]=supply[k]||[]).push({id:n.id,amt:perMin(R[n.rid],a)*n.m});}
+    else (supply[n.item]=supply[n.item]||[]).push({id:n.id,amt:n.amt});
+  }
+  const edges=[];
+  const link=(k,need,to)=>{const sp=(supply[k]||[]).filter(s=>s.id!==to);const tot=sp.reduce((a,s)=>a+s.amt,0);if(!tot)return;
+    for(const s of sp){const r=need*s.amt/tot;if(r>1e-6)edges.push({from:s.id,to,item:k,rate:r});}};
+  for(const n of nodes)if(n.type==='line')for(const [k,a] of R[n.rid].i)link(k,perMin(R[n.rid],a)*n.m,n.id);
+  for(const [k,a] of Object.entries(t)){add({id:'O:'+k,type:'out',item:k,amt:a});link(k,a,'O:'+k);}
+  for(const [k,a] of Object.entries(res.surplus)){if(t[k])continue;add({id:'S:'+k,type:'sur',item:k,amt:a});link(k,a,'S:'+k);}
+  if(!nodes.length){wrap.innerHTML='<div class="empty">出荷するものを追加すると、工場の流れが表示されます。</div>';return;}
+  // layering (longest path from raw), capped for cycles
+  const inc={};edges.forEach(e=>(inc[e.to]=inc[e.to]||[]).push(e));
+  const L={};nodes.forEach(n=>L[n.id]=0);
+  for(let i=0;i<nodes.length+2;i++){let ch=false;
+    for(const n of nodes){if(n.type==='in')continue;const v=Math.max(0,...(inc[n.id]||[]).map(e=>L[e.from]+1));if(v!==L[n.id]&&v<=nodes.length){L[n.id]=v;ch=true;}}
+    if(!ch)break;}
+  const maxL=Math.max(...nodes.filter(n=>n.type!=='out'&&n.type!=='sur').map(n=>L[n.id]));
+  nodes.forEach(n=>{if(n.type==='out'||n.type==='sur')L[n.id]=maxL+1;});
+  const cols=[];nodes.forEach(n=>{(cols[L[n.id]]=cols[L[n.id]]||[]).push(n);});
+  for(let c=0;c<cols.length;c++)if(!cols[c])cols[c]=[];
+  const NW=176,NH=58,GX=96,GY=16,PAD=24;
+  const pos={};
+  cols.forEach((col,c)=>{col.sort((a,b)=>(a.type==='sur')-(b.type==='sur')||RAW_ORDER.indexOf(a.item)-RAW_ORDER.indexOf(b.item)||nm(a.item).localeCompare(nm(b.item),'ja'));col.forEach((n,i)=>pos[n.id]=i);});
+  for(let pass=0;pass<4;pass++){
+    for(let c=1;c<cols.length;c++){cols[c].forEach(n=>{const es=inc[n.id]||[];n._bc=es.length?es.reduce((s,e)=>s+pos[e.from]*e.rate,0)/es.reduce((s,e)=>s+e.rate,0):pos[n.id];});
+      cols[c].sort((a,b)=>(a.type==='sur')-(b.type==='sur')||a._bc-b._bc);cols[c].forEach((n,i)=>pos[n.id]=i);}
+  }
+  const H=Math.max(...cols.map(c=>c.length))*(NH+GY)-GY;
+  const W=cols.length*(NW+GX)-GX;
+  cols.forEach((col,c)=>{const h=col.length*(NH+GY)-GY,off=(H-h)/2;col.forEach((n,i)=>{n.x=PAD+c*(NW+GX);n.y=PAD+off+i*(NH+GY);});});
+  // ports
+  const outE={},inE={};edges.forEach(e=>{(outE[e.from]=outE[e.from]||[]).push(e);(inE[e.to]=inE[e.to]||[]).push(e);});
+  const maxR=Math.max(...edges.map(e=>e.rate),1);
+  const wOf=r=>1.5+8*Math.sqrt(r/maxR);
+  const spread=(list,key,node)=>{list.sort((a,b)=>byId[a[key]].y-byId[b[key]].y);const tw=list.reduce((s,e)=>s+wOf(e.rate),0);const room=NH-14;const sc=Math.min(1,room/Math.max(tw,1));let y=node.y+NH/2-Math.min(tw,room)/2;
+    list.forEach(e=>{const w=wOf(e.rate)*sc;e[key==='to'?'y1':'y2']=y+w/2;y+=w;});};
+  for(const n of nodes){if(outE[n.id])spread(outE[n.id],'to',n);if(inE[n.id])spread(inE[n.id],'from',n);}
+  const ew=edges.map(e=>{const a=byId[e.from],b=byId[e.to];const x1=a.x+NW,x2=b.x;let d;
+    if(x2>x1){const mx=(x2-x1)*.5;d=`M${x1},${e.y1} C${x1+mx},${e.y1} ${x2-mx},${e.y2} ${x2},${e.y2}`;}
+    else{const dy=Math.max(a.y,b.y)+NH+18;d=`M${x1},${e.y1} C${x1+60},${e.y1} ${x1+60},${dy} ${(x1+x2)/2},${dy} S${x2-60},${e.y2} ${x2},${e.y2}`;}
+    const w=wOf(e.rate),dur=Math.max(.45,2.6-Math.log10(e.rate+1)*.75);
+    return `<g class="edge" data-f="${e.from}" data-t="${e.to}" data-tip="${esc(nm(e.item))}|${fmt(e.rate,1)} ${unit(e.item)}/分"><path class="trk" d="${d}" stroke="${itemColor(e.item)}" stroke-width="${w+3}"/><path class="itm" d="${d}" stroke="${itemColor(e.item)}" stroke-width="${Math.max(2.4,w*.7)}" style="--d:${dur.toFixed(2)}s"/></g>`;}).join('');
+  const trunc=(s,n)=>s.length>n?s.slice(0,n-1)+'…':s;
+  const nw=nodes.map(n=>{const col=itemColor(n.item);let l1=trunc(nm(n.item),12),l2='',big='';
+    if(n.type==='line'){big=fmt(n.m,n.m<10?1:0);l2=trunc(`${mn(R[n.rid].m)}${R[n.rid].a?' ・ 代替':''}`,9);}
+    else if(n.type==='in'){big=fmt(n.amt,0);l2=isRaw(n.item)?'採掘 /分':'搬入 /分';}
+    else if(n.type==='out'){big=fmt(n.amt,n.amt<10?1:0);l2='出荷 /分';}
+    else {big=fmt(n.amt,n.amt<10?1:0);l2='余剰 /分';}
+    const cls='gnode '+(n.type==='in'?'raw':'')+(n.type==='out'?' tgt':'');
+    return `<g class="${cls}" data-id="${n.id}" data-item="${n.item}"${n.type==='line'?` data-rec="${n.item}"`:''} transform="translate(${n.x},${n.y})" tabindex="0" role="button" aria-label="${esc(nm(n.item))} ${esc(l2)} ${big}">
+      <rect class="b" width="${NW}" height="${NH}" rx="8"/><rect width="4" height="${NH-16}" x="0" y="8" rx="2" fill="${col}"/>
+      <text x="14" y="23" font-size="12.5" font-weight="600">${esc(l1)}</text><text class="s" x="14" y="44" font-size="11">${esc(l2)}</text>
+      <text class="n" x="${NW-12}" y="45" font-size="17" text-anchor="end" fill="${n.type==='line'?'var(--fg)':col}">${n.type==='line'?'×'+big:big}</text></g>`;}).join('');
+  wrap.innerHTML=`<svg width="${W+PAD*2}" height="${H+PAD*2+30}" viewBox="0 0 ${W+PAD*2} ${H+PAD*2+30}" role="img" aria-label="工場フロー図">${ew}${nw}</svg><div class="tip" hidden></div>`;
+  // legend: ores in use
+  const ores=[...new Set(nodes.map(n=>itemColor(n.item)))];
+  $('#p-legend').innerHTML=RAW_ORDER.filter(r=>res.inputs[r]).map(r=>`<span><i style="--c:${itemColor(r)}"></i>${esc(nm(r))}系</span>`).join('');
+  const svg=wrap.querySelector('svg'),tip=wrap.querySelector('.tip');
+  const focus=id=>{if(!id){svg.classList.remove('focus');svg.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));return;}
+    svg.classList.add('focus');svg.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
+    svg.querySelector(`.gnode[data-id="${CSS.escape(id)}"]`).classList.add('on');
+    svg.querySelectorAll('.edge').forEach(e=>{if(e.dataset.f===id||e.dataset.t===id){e.classList.add('on');svg.querySelector(`.gnode[data-id="${CSS.escape(e.dataset.f===id?e.dataset.t:e.dataset.f)}"]`).classList.add('on');}});};
+  svg.addEventListener('pointerover',e=>{const g=e.target.closest('.gnode');if(g)focus(g.dataset.id);const ed=e.target.closest('.edge');
+    if(ed){const [a,b]=ed.dataset.tip.split('|');tip.innerHTML=`${esc(a)} <b>${esc(b)}</b>`;tip.hidden=false;}});
+  svg.addEventListener('pointermove',e=>{if(tip.hidden)return;const r=wrap.getBoundingClientRect();tip.style.left=(e.clientX-r.left+wrap.scrollLeft+14)+'px';tip.style.top=(e.clientY-r.top+wrap.scrollTop+12)+'px';});
+  svg.addEventListener('pointerout',e=>{if(e.target.closest('.gnode'))focus(null);if(e.target.closest('.edge'))tip.hidden=true;});
+  svg.addEventListener('focusin',e=>{const g=e.target.closest('.gnode');if(g)focus(g.dataset.id);});
+  svg.addEventListener('focusout',()=>focus(null));
+}
+
+/* ================= TREE (bill of materials) ================= */
+const TS=()=>{if(!S.tree||typeof S.tree!=='object')S.tree={};const T=S.tree;
+  if(!I[T.item])T.item='Desc_ModularFrameHeavy_C';if(!(+T.qty>0))T.qty=10;T.over=T.over||{};T.stock=T.stock||{};T.col=T.col||{};return T;};
+const tChoose=it=>effRecipe(it,S.tree.over);
+const outAmt=(r,it)=>r.o.reduce((s,[x,a])=>s+(x===it?a:0),0);
+const dur=s=>{s=Math.round(s);if(s<60)return `${s}秒`;const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?`${h}時間${m}分`:`${m}分${sec?sec+'秒':''}`;};
+const qf=v=>Math.abs(v-Math.round(v))<1e-6?fmt(Math.round(v),0):fmt(v,2);
+let tCount=0;
+function tBuild(it,q,anc,path){
+  const n={it,q,path,kids:[]};tCount++;
+  if(isRaw(it)){n.leaf='raw';return n;}
+  if(anc.has(it)){n.leaf='cyc';return n;}
+  const rid=tChoose(it);
+  if(!rid||tCount>4000){n.leaf='ext';return n;}
+  const r=R[rid],out=outAmt(r,it);let c=q/out;if(S.tree.ceil)c=Math.ceil(c-1e-9);
+  Object.assign(n,{rid,crafts:c,time:c*r.t,energy:c*r.t*r.p,over:c*out-q,by:r.o.filter(([x])=>x!==it).map(([x,a])=>[x,a*c])});
+  const a2=new Set(anc);a2.add(it);
+  r.i.forEach(([x,a],ix)=>n.kids.push(tBuild(x,a*c,a2,path+'.'+ix)));
+  return n;
+}
+// aggregated requirements with stock deducted (top-down in dependency order)
+function tAggregate(root,qty){
+  const order=[],vis={},onStack={};
+  const visit=it=>{if(vis[it]||onStack[it])return;onStack[it]=1;const rid=!isRaw(it)&&tChoose(it);if(rid)R[rid].i.forEach(([x])=>visit(x));onStack[it]=0;vis[it]=1;order.push(it);};
+  visit(root);order.reverse();
+  const Dm={[root]:qty},info={},by={},done=new Set();let energy=0,crafts=0;const mtime={};
+  for(const it of order){done.add(it);const d=Dm[it]||0;if(d<=1e-12)continue;
+    const st=Math.max(0,+S.tree.stock[it]||0),need=Math.max(0,d-st);
+    const inf=info[it]={gross:d,stock:Math.min(st,d),need};
+    if(isRaw(it))continue;const rid=tChoose(it);if(!rid){inf.ext=true;continue;}
+    const r=R[rid],out=outAmt(r,it);let c=need/out;if(S.tree.ceil)c=Math.ceil(c-1e-9);
+    Object.assign(inf,{rid,crafts:c,time:c*r.t});energy+=c*r.t*r.p;crafts+=c;mtime[r.m]=(mtime[r.m]||0)+c*r.t;
+    r.o.forEach(([x,a])=>{if(x!==it)by[x]=(by[x]||0)+a*c;});
+    if(S.tree.ceil&&c*out>need+1e-9)by[it]=(by[it]||0)+c*out-need;
+    r.i.forEach(([x,a])=>{if(done.has(x)){(info[x]=info[x]||{gross:0,stock:0,need:0}).cyc=(info[x].cyc||0)+a*c;}else Dm[x]=(Dm[x]||0)+a*c;});
+  }
+  return {info,by,energy,crafts,mtime,order};
+}
+function renderTree(){
+  const T=TS();
+  $('#t-item').innerHTML=itemOptions(T.item,producible);$('#t-qty').value=T.qty;$('#t-unit').textContent=unit(T.item);$('#t-ceil').checked=!!T.ceil;
+  $('#t-gl').innerHTML=glyph(T.item);
+  tCount=0;const root=tBuild(T.item,+T.qty,new Set(),'r');
+  const ag=tAggregate(T.item,+T.qty);
+  // readout
+  const raws=Object.entries(ag.info).filter(([k,v])=>isRaw(k)&&v.need>1e-9);
+  const rawTot=raws.filter(([k])=>k!=='Desc_Water_C').reduce((s,[,v])=>s+v.need,0);
+  const mids=ag.order.filter(k=>!isRaw(k)&&k!==T.item&&ag.info[k]);
+  const longest=Object.entries(ag.mtime).sort((a,b)=>b[1]-a[1])[0];
+  const statDefs=[
+    ['te','必要なエネルギー',ag.energy/1000,v=>fmt(v,v<10?2:1),'GJ',`燃料式発電機1台を ${dur(ag.energy/250)} 動かす量`],
+    ['tc','製作の回数',ag.crafts,v=>fmt(v,0),'回',`${Object.keys(ag.mtime).length} 種類の装置を使用`],
+    ['tr','原料の合計',rawTot,v=>fmt(v,0),'個',`${raws.filter(([k])=>k!=='Desc_Water_C').length} 種類（水を除く）`],
+    ['tm','中間素材',mids.length,v=>fmt(v,0),'種類',longest?`いちばん時間がかかる: ${mn(longest[0])} 1台で ${dur(longest[1])}`:'']];
+  const box=$('#t-stats');
+  if(!box.children.length)box.innerHTML=statDefs.map(d=>`<div><div class="k">${d[1]}</div><div class="v" id="st-${d[0]}">0<small>${d[4]}</small></div><div class="s" id="ss-${d[0]}"></div></div>`).join('');
+  statDefs.forEach(d=>{tween($('#st-'+d[0]),d[2],d[3]);$('#ss-'+d[0]).textContent=d[5];});
+  // tree
+  const chev='<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2l4 4-4 4"/></svg>';
+  const recOpts=(it,cur)=>(producers[it]||[]).map(rid=>`<option value="${rid}"${rid===cur?' selected':''}>${esc(rn(rid))}（${esc(mn(R[rid].m))}）${isLocked(rid)?' 未解禁':''}</option>`).join('')+`<option value=""${!cur?' selected':''}>手持ち・外部から搬入</option>`;
+  const rowHtml=(n,depth)=>{
+    const open=!T.col[n.path];const col=itemColor(n.it);const ch=has(T.over,n.it);
+    let sub='';
+    if(n.leaf==='raw')sub=`<span>採掘する原料</span>`;
+    else if(n.leaf==='ext')sub=`<span class="tleaf-ext">手持ち・外部から搬入</span>`;
+    else if(n.leaf==='cyc')sub=`<span class="tleaf-ext">上の段と循環するため、ここで止めています</span>`;
+    else sub=`${esc(mn(R[n.rid].m))}で <b class="num">${qf(n.crafts)}</b> 回 ・ 1台なら ${dur(n.time)}${R[n.rid].a?' ・ <span style="color:var(--alt)">代替</span>':''}${n.by.length?` ・ 副産物 ${n.by.map(([x,a])=>esc(nm(x))+' '+qf(a)).join('、')}`:''}${S.tree.ceil&&n.over>1e-6?` ・ 余り ${qf(n.over)}`:''}`;
+    const kids=n.kids.length?`<div class="tkids" style="--pc:${col}"${open?'':' hidden'}>${n.kids.map(k=>rowHtml(k,depth+1)).join('')}</div>`:'';
+    return `<div class="tn"><div class="trow${depth===0?' root':''}${n.kids.length?'':' leaf'}" data-it="${n.it}" data-path="${n.path}">
+      ${n.kids.length?`<button class="tg" type="button" data-tg="${n.path}" aria-expanded="${open}" aria-label="${open?'たたむ':'開く'}">${chev}</button>`:'<span></span>'}
+      ${glyph(n.it,depth?'s':'')}
+      <div class="tmain"><div class="nmx"><b>${ilink(n.it)}</b>${ch?'<span class="pill p-good">変更</span>':''}</div><span class="sub">${sub}</span></div>
+      ${isRaw(n.it)?'<span></span>':`<select class="tsel" data-tov="${n.it}" aria-label="${esc(nm(n.it))}のレシピ">${recOpts(n.it,n.rid||null)}</select>`}
+      <div class="tq"><b>${qf(n.q)}</b><span>${unit(n.it)}</span></div></div>${kids}</div>`;
+  };
+  $('#t-tree').innerHTML=rowHtml(root,0)+(tCount>4000?'<p class="note">ツリーが大きすぎるため途中で省略しました。</p>':'');
+  // raw totals
+  const maxA=Math.max(1,...raws.filter(([k])=>k!=='Desc_Water_C').map(([,v])=>v.need));
+  raws.sort((a,b)=>RAW_ORDER.indexOf(a[0])-RAW_ORDER.indexOf(b[0]));
+  $('#t-rawnote').textContent=`${fmt(+T.qty,2)} ${unit(T.item)}の${nm(T.item)}に必要`;
+  $('#t-raw').innerHTML=raws.length?raws.map(([it,v])=>`<div class="resrow" data-hl="${it}"><span class="nm">${glyph(it,'s')}${ilink(it)}</span><span class="amt">${qf(v.need)}<small class="muted" style="font-size:12px;font-weight:500"> ${unit(it)}</small></span><span class="bar"><i style="width:${it==='Desc_Water_C'?100:Math.min(100,v.need/maxA*100)}%;--c:${itemColor(it)}"></i></span>${WORLD[it]&&!I[it].l?`<span class="meta">採鉱機Mk.2・普通ノードで ${dur(v.need/(MN.Desc_MinerMk2_C?MN.Desc_MinerMk2_C.pm:120)*60)}ぶん</span>`:''}</div>`).join(''):'<div class="muted small">原料は不要です（すべて手持ちでまかなえます）。</div>';
+  // intermediates with stock
+  const midList=ag.order.filter(k=>!isRaw(k)&&ag.info[k]);
+  $('#t-mid').innerHTML=midList.length?midList.map(it=>{const v=ag.info[it];const st=S.tree.stock[it];
+    return `<div class="midrow${v.need<1e-9?' done':''}" data-hl="${it}"><div class="nm">${glyph(it,'s')}<div>${ilink(it)}<span class="sub">${v.ext?'搬入':v.rid?`${esc(mn(R[v.rid].m))} ${qf(v.crafts)}回`:''}${v.stock>0?` ・ 必要 ${qf(v.gross)} − 手持ち ${qf(v.stock)}`:''}${v.cyc?` ・ 循環分 ${qf(v.cyc)}`:''}</span></div></div>
+      <div class="q"><b>${qf(v.need)}</b><span class="sub">${v.need<1e-9?'手持ちで足りる':'作る量'}</span></div>
+      <input type="number" min="0" step="any" placeholder="手持ち" value="${st?esc(st):''}" data-stock="${it}" aria-label="${esc(nm(it))}の手持ち"></div>`}).join(''):'<div class="muted small">中間素材はありません。</div>';
+  const by=Object.entries(ag.by).filter(([,a])=>a>1e-9);
+  $('#t-bycard').hidden=!by.length;
+  $('#t-by').innerHTML=`<div class="res">`+by.map(([it,a])=>`<div class="resrow"><span class="nm">${glyph(it,'s')}${ilink(it)}</span><span class="amt">${qf(a)}<small class="muted" style="font-size:12px;font-weight:500"> ${unit(it)}</small></span>${it===T.item?'<span class="meta">切り上げで余る分</span>':''}</div>`).join('')+'</div>';
+}
+function treeText(){
+  const T=TS();tCount=0;const root=tBuild(T.item,+T.qty,new Set(),'r');const lines=[];
+  const walk=(n,pre,last,top)=>{const head=top?'':pre+(last?'└ ':'├ ');
+    lines.push(`${head}${nm(n.it)} ×${qf(n.q)}${n.rid?`（${mn(R[n.rid].m)} ${qf(n.crafts)}回${R[n.rid].a?'・'+rn(n.rid):''}）`:n.leaf==='raw'?'［採掘］':n.leaf?'［搬入］':''}`);
+    n.kids.forEach((k,i)=>walk(k,top?'':pre+(last?'　 ':'│ '),i===n.kids.length-1,false));};
+  walk(root,'',true,true);
+  const ag=tAggregate(T.item,+T.qty);
+  lines.push('','■ 原料の合計');Object.entries(ag.info).filter(([k,v])=>isRaw(k)&&v.need>1e-9).forEach(([k,v])=>lines.push(`・${nm(k)} ${qf(v.need)}${unit(k)==='m³'?' m³':''}`));
+  return lines.join('\n');
+}
+
+/* ================= COMPARE ================= */
+let cSort={k:'power',dir:1},cHot=null;
+function renderCompare(){
+  $('#c-item').innerHTML=itemOptions(S.cItem,producible);
+  $('#c-rate').value=S.cRate;$('#c-water').checked=S.cWater;$('#c-unl').checked=S.cUnl;$('#c-group').checked=S.cGroup!==false;
+  const it=S.cItem,rate=+S.cRate||1;
+  $('#c-quick').innerHTML=QUICK.map(q=>`<button type="button" class="chip" data-quick="${q}" aria-pressed="${q===it}">${glyph(q,'s')}${esc(nm(q))}</button>`).join('');
+  let rids=(producers[it]||[]);if(S.cUnl)rids=rids.filter(unlocked);
+  const rows=rids.map(rid=>{const r=R[rid];
+    const res=solve({[it]:rate},x=>x===it?rid:effRecipe(x));
+    if(res.error)return {rid,err:res.error};
+    const sc=resScore(res.inputs,S.cWater);
+    const by=Object.entries(res.surplus).filter(([k])=>k!==it);
+    const ext=Object.keys(res.inputs).some(k=>!isRaw(k));
+    return {rid,r,res,direct:rate/net(r,it),power:res.power,mc:res.mcount,raw:sc.total,score:sc.score,by,ext};
+  });
+  const ok=rows.filter(r=>!r.err);
+  const pool=ok.filter(r=>!r.ext).length?ok.filter(r=>!r.ext):ok;
+  const best=k=>Math.min(...pool.map(r=>r[k])),worst=k=>Math.max(...ok.map(r=>r[k]),1e-9);
+  const B={power:best('power'),raw:best('raw'),score:best('score'),mc:best('mc')},W={power:worst('power'),raw:worst('raw'),score:worst('score'),mc:worst('mc')};
+  const key={name:r=>rn(r.rid),direct:r=>r.direct,power:r=>r.power,mc:r=>r.mc,raw:r=>r.raw,score:r=>r.score};
+  ok.sort((a,b)=>{const f=key[cSort.k];const va=f(a),vb=f(b);return (typeof va==='string'?va.localeCompare(vb):va-vb)*cSort.dir;});
+  const grouped=S.cGroup!==false;
+  if(grouped)ok.sort((a,b)=>MACH_ORDER.indexOf(a.r.m)-MACH_ORDER.indexOf(b.r.m));
+  const defR=effRecipe(it),planR=effRecipe(it,S.cur.over);
+  // machine summary
+  const byM={};ok.forEach(o=>(byM[o.r.m]=byM[o.r.m]||[]).push(o));
+  const mKeys=Object.keys(byM).sort((a,b)=>MACH_ORDER.indexOf(a)-MACH_ORDER.indexOf(b));
+  $('#c-sum').innerHTML=mKeys.map(m=>{const g=byM[m];const bp=g.reduce((x,y)=>y.power<x.power?y:x),bs=g.reduce((x,y)=>y.score<x.score?y:x);
+    return `<div class="mcard"><h3>${esc(mn(m))}<small>${g.length} レシピ</small></h3>
+      <div class="w"><span>省電力</span><b>${esc(rn(bp.rid))}</b><span class="num">${fmt(bp.power,1)} MW</span></div>
+      <div class="w"><span>省資源</span><b>${esc(rn(bs.rid))}</b><span class="num">${fmt(bs.score,3)}%</span></div></div>`}).join('');
+  $('#c-plotcard').hidden=ok.length<2;
+  if(ok.length>=2)$('#c-plot').innerHTML=scatter(ok);
+  let lastM=null;
+  const th=(k,l,n)=>`<th class="sort${n?' n':''}" data-sort="${k}" aria-sort="${cSort.k===k?(cSort.dir>0?'ascending':'descending'):'none'}">${l}${cSort.k===k?(cSort.dir>0?' ↑':' ↓'):''}</th>`;
+  const LBL={power:'全工程の電力 MW',mc:'全工程の台数',raw:'原料 /分',score:'資源比率 %'};
+  const cell=(o,k,d)=>{const isB=!o.ext&&Math.abs(o[k]-B[k])<1e-9;return `<td class="n" data-l="${LBL[k]}"><span class="num${isB?' best':''}">${fmt(o[k],d)}</span><span class="ibar${isB?' best':''}"><i style="width:${Math.max(3,o[k]/W[k]*100)}%"></i></span></td>`;};
+  const rowHtml=o=>{const r=o.r;
+    const raws=Object.entries(o.res.inputs).sort((a,b)=>RAW_ORDER.indexOf(a[0])-RAW_ORDER.indexOf(b[0]));
+    const chain=Object.entries(o.res.rec).filter(([,rid])=>o.res.x[rid]>1e-9).sort((a,b)=>MACH_ORDER.indexOf(R[b[1]].m)-MACH_ORDER.indexOf(R[a[1]].m));
+    let head='';
+    if(grouped&&r.m!==lastM){lastM=r.m;head=`<tr class="grp"><td colspan="8"><b>${esc(mn(r.m))}</b> ${fmt(M[r.m].p||r.p)} MW/台</td></tr>`;}
+    return head+`<tr id="cr-${o.rid}" class="${o.rid===planR?'inplan':''}${o.rid===cHot?' hot':''}"><td><b style="font-weight:600">${esc(rn(o.rid))}</b><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${altPill(o.rid)}${unlockPill(o.rid)}${o.ext?'<span class="pill p-acc">搬入品あり</span>':''}${o.rid===defR?'<span class="pill p-std">既定</span>':''}${o.rid===planR?'<span class="pill p-good">計画で使用中</span>':''}</div>
+      <div class="row" style="margin-top:8px;gap:6px">${o.rid===planR?'':`<button class="btn sm" type="button" data-useplan="${o.rid}">計画で使う</button>`}${o.rid===defR?'':`<button class="btn sm ghost" type="button" data-usedef="${o.rid}">既定にする</button>`}</div></td>
+      <td class="small" data-l="1台あたり /分"><div class="muted nw" style="margin-bottom:4px">${esc(mn(r.m))} ・ ${fmt(r.p)} MW</div>${flowList(r.i,r)}<div class="muted">↓</div>${flowList(r.o,r)}</td>
+      <td class="n" data-l="直接の台数"><span class="num">${fmt(o.direct)}</span></td>${cell(o,'power',1)}${cell(o,'mc',1)}${cell(o,'raw',1)}${cell(o,'score',3)}
+      <td class="small" data-l="原料の内訳 /分">${raws.map(([k,a])=>`<div class="nw">${glyph(k,'s')} <span class="num">${fmt(a,1)}</span> ${ilink(k)}${isRaw(k)?'':' <span class="pill p-acc">搬入</span>'}</div>`).join('')}
+        ${o.by.length?`<div class="muted" style="margin-top:6px">副産物</div>`+o.by.map(([k,a])=>`<div class="nw"><span class="num">${fmt(a,1)}</span> ${ilink(k)}</div>`).join(''):''}
+        <details style="margin-top:6px"><summary class="muted" style="cursor:pointer">工程 ${chain.length}</summary>${chain.map(([ci,cr])=>`<div class="nw"><span class="num">${fmt(o.res.x[cr])}</span> ${esc(mn(R[cr].m))}: ${esc(nm(ci))}${R[cr].a?' <span class="pill p-alt">代替</span>':''}</div>`).join('')}</details></td></tr>`};
+  const msort=`<div class="msort chips"><span class="lbl">並べ替え</span>${[['power','電力'],['score','資源比率'],['raw','原料'],['mc','台数']].map(([k,l])=>`<button type="button" class="chip plain" data-sort="${k}" aria-pressed="${cSort.k===k}">${l}${cSort.k===k?(cSort.dir>0?' ↑':' ↓'):''}</button>`).join('')}</div>`;
+  $('#c-out').innerHTML=msort+`<div class="tbl"><table><thead><tr>${th('name','レシピ')}<th>1台あたり /分</th>${th('direct','直接の台数',1)}${th('power','全工程の電力 MW',1)}${th('mc','全工程の台数',1)}${th('raw','原料 /分',1)}${th('score','資源比率 %',1)}<th>原料の内訳 /分</th></tr></thead><tbody>`+
+    ok.map(rowHtml).join('')+rows.filter(r=>r.err).map(o=>`<tr><td>${esc(rn(o.rid))}</td><td colspan="7" class="muted">${esc(o.err)}</td></tr>`).join('')+
+    `</tbody></table></div>`+(ok.length?'':'<div class="empty">表示できるレシピがありません。「解禁済みだけ」を外すと全レシピを表示します。</div>');
+}
+function scatter(ok){
+  const Wd=980,Ht=330,ml=62,mr=190,mt=16,mb=42;
+  const xs=ok.map(o=>o.power),ys=ok.map(o=>o.score);
+  const xM=Math.max(...xs)*1.12||1,yM=Math.max(...ys)*1.15||1;
+  const X=v=>ml+v/xM*(Wd-ml-mr),Y=v=>Ht-mb-v/yM*(Ht-mt-mb);
+  const ticks=(m)=>{const raw=m/4,p=Math.pow(10,Math.floor(Math.log10(raw))),s=[1,2,2.5,5,10].map(k=>k*p).find(k=>k>=raw);const out=[];for(let v=0;v<=m+1e-12;v+=s)out.push(v);return out;};
+  const xt=ticks(xM),yt=ticks(yM);
+  const mx=Math.min(...xs),my=Math.min(...ys);
+  let g='';
+  g+=xt.map(v=>`<line class="gd" x1="${X(v)}" x2="${X(v)}" y1="${mt}" y2="${Ht-mb}"/><text x="${X(v)}" y="${Ht-mb+16}" text-anchor="middle">${fmt(v,1)}</text>`).join('');
+  g+=yt.map(v=>`<line class="gd" x1="${ml}" x2="${Wd-mr}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${ml-8}" y="${Y(v)+4}" text-anchor="end">${fmt(v,3)}</text>`).join('');
+  g+=`<line class="ax" x1="${ml}" x2="${Wd-mr}" y1="${Ht-mb}" y2="${Ht-mb}"/><line class="ax" x1="${ml}" x2="${ml}" y1="${mt}" y2="${Ht-mb}"/>`;
+  g+=`<text x="${(ml+Wd-mr)/2}" y="${Ht-6}" text-anchor="middle">全工程の電力 MW</text><text transform="translate(14 ${(mt+Ht-mb)/2}) rotate(-90)" text-anchor="middle">資源比率 %</text>`;
+  const placed=[];
+  g+=ok.map(o=>{const x=X(o.power),y=Y(o.score);let ly=y+4;while(placed.some(p=>Math.abs(p-ly)<14))ly+=14;placed.push(ly);
+    const c=o.r.a?'var(--alt)':'var(--accent)';const label=rn(o.rid).replace(/^代替: |^Alt: /,'');
+    return `<g class="pt${o.rid===cHot?' hot':''}" data-pt="${o.rid}" tabindex="0" role="button" aria-label="${esc(rn(o.rid))}"><circle cx="${x}" cy="${y}" r="7" fill="${c}"${o.ext?' fill-opacity=".45"':''}/><text class="lb" x="${x+12}" y="${ly}">${esc(label.length>22?label.slice(0,21)+'…':label)}</text></g>`;}).join('');
+  return `<div style="overflow-x:auto"><svg class="scatter" viewBox="0 0 ${Wd} ${Ht}" style="width:100%;min-width:520px;height:auto" role="img" aria-label="レシピごとの電力と資源比率">${g}</svg></div>`;
+}
+
+/* ================= ITEMS ================= */
+function renderItems(){
+  const q=$('#isearch').value.trim().toLowerCase();
+  const groups=groupItems();
+  $('#icats').innerHTML=`<button type="button" class="chip plain" data-icat="all" aria-pressed="${S.icat==='all'}">すべて</button>`+groups.map(g=>`<button type="button" class="chip plain" data-icat="${g.key}" aria-pressed="${S.icat===g.key}">${esc(g.name)} <span class="muted">${g.items.length}</span></button>`).join('');
+  const html=groups.filter(g=>S.icat==='all'||g.key===S.icat).map(g=>{
+    const its=g.items.filter(it=>!q||I[it].j.toLowerCase().includes(q)||I[it].n.toLowerCase().includes(q));
+    if(!its.length)return '';
+    return `<div class="cat">${esc(g.name)}<small>${its.length}</small></div><div class="igrid">`+its.map(it=>{
+      const np=(producers[it]||[]).length,na=(producers[it]||[]).filter(r=>R[r].a).length;
+      return `<button type="button" class="itile" data-item="${it}" style="--c:${itemColor(it)}">${glyph(it)}<div><b>${esc(nm(it))}</b><span>${esc(nm2(it))}</span><span>${isRaw(it)?'採掘'+(np?` ・ 変換 ${np}`:''):np?`レシピ ${np}`+(na?` ・ 代替 ${na}`:''):'採取'}</span></div></button>`}).join('')+'</div>';
+  }).join('');
+  $('#igrid').innerHTML=html||'<div class="empty">一致するアイテムがありません。別の言葉で探すか、カテゴリを「すべて」に戻してください。</div>';
+}
+function openDrawer(it){
+  if(!I[it])return;
+  const d=I[it],pr=producers[it]||[],co=[...new Set(consumers[it]||[])];
+  const gens=Object.entries(G).filter(([,g])=>g.f.includes(it)).map(([gid])=>mn(gid));
+  const rc=rid=>{const r=R[rid];return `<div class="rcard"><div class="top"><b>${esc(rn(rid))}</b><span style="display:flex;gap:4px;flex-wrap:wrap">${altPill(rid)}${unlockPill(rid)}<span class="pill p-std">${esc(mn(r.m))} ${fmt(r.p)} MW</span></span></div>
+    <div class="io"><div>${flowList(r.i,r)}</div><span class="ar">→</span><div>${flowList(r.o,r)}</div></div></div>`;};
+  $('#layer').innerHTML=`<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(nm(it))}">
+    <div class="dhead">${glyph(it,'l')}<div><h2>${esc(nm(it))}</h2><div class="muted">${esc(nm2(it))}</div></div><button class="btn ghost x" type="button" data-close aria-label="閉じる">閉じる</button></div>
+    <div class="facts"><span>シンク<b>${fmt(d.s,0)} pt</b></span>${d.l?'<span>液体・気体</span>':`<span>スタック<b>${d.st}</b></span>`}${d.e?`<span>エネルギー<b>${fmt(d.e)} MJ</b></span>`:''}${gens.length?`<span>燃料: ${esc(gens.join('、'))}</span>`:''}${WORLD[it]?`<span>マップ最大<b>${fmt(WORLD[it],0)}/分</b></span>`:''}</div>
+    ${producible(it)?`<div class="row" style="margin-bottom:16px"><button class="btn pri" type="button" data-dplan="${it}">計画に追加</button><button class="btn" type="button" data-totree="${it}" data-q="10">部材ツリー</button><button class="btn" type="button" data-cmpitem="${it}">レシピを比較</button></div>`:''}
+    <h3 class="sec-t" style="margin:20px 0 0">作り方 <span class="muted small">${pr.length}</span></h3><div class="dlist">${pr.map(rc).join('')||'<div class="muted small">採掘・採取で入手します。</div>'}</div>
+    <h3 class="sec-t" style="margin:22px 0 0">使い道 <span class="muted small">${co.length}</span></h3><div class="dlist">${co.map(rc).join('')||'<div class="muted small">使い道はありません。</div>'}</div></aside>`;
+  $('#layer .drawer').focus?.();
+  setTimeout(()=>$('#layer .x')&&$('#layer .x').focus(),30);
+}
+function closeLayer(){$('#layer').innerHTML='';}
+
+/* ---------- command palette ---------- */
+let palSel=0,palList=[];
+function openPal(){
+  $('#layer').innerHTML=`<div class="scrim" data-close></div><div class="pal" role="dialog" aria-modal="true" aria-label="アイテムを探す"><input id="pal-q" type="search" placeholder="アイテム名（日本語・英語）" autocomplete="off" aria-controls="pal-l"><ul id="pal-l" role="listbox"></ul><div class="hint"><span>↑↓ 選ぶ</span><span>Enter 詳細</span><span>Shift+Enter 計画に追加</span><span>Esc 閉じる</span></div></div>`;
+  const q=$('#pal-q');q.focus();palSel=0;palFill('');
+  q.addEventListener('input',()=>{palSel=0;palFill(q.value);});
+  q.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'){palSel=Math.min(palList.length-1,palSel+1);palMark();e.preventDefault();}
+    else if(e.key==='ArrowUp'){palSel=Math.max(0,palSel-1);palMark();e.preventDefault();}
+    else if(e.key==='Enter'&&palList[palSel]){const it=palList[palSel];if(e.shiftKey&&producible(it)){addTarget(it);}else openDrawer(it);e.preventDefault();}
+  });
+}
+function palFill(q){q=q.trim().toLowerCase();
+  const all=groupItems().flatMap(g=>g.items);
+  palList=(q?all.filter(it=>I[it].j.toLowerCase().includes(q)||I[it].n.toLowerCase().includes(q)).sort((a,b)=>{const sa=(I[a].j.toLowerCase().startsWith(q)||I[a].n.toLowerCase().startsWith(q))?0:1,sb=(I[b].j.toLowerCase().startsWith(q)||I[b].n.toLowerCase().startsWith(q))?0:1;return sa-sb;}):all.filter(producible)).slice(0,40);
+  $('#pal-l').innerHTML=palList.map((it,i)=>`<li role="option" data-pi="${i}" aria-selected="${i===palSel}">${glyph(it,'s')}<div class="t">${esc(nm(it))}<span>${esc(nm2(it))}</span></div>${producible(it)?`<div class="acts"><button class="btn sm ghost" type="button" data-cmpitem="${it}">比較</button><button class="btn sm" type="button" data-dplan="${it}">計画に追加</button></div>`:''}</li>`).join('')||'<li class="muted">見つかりません</li>';}
+function palMark(){document.querySelectorAll('#pal-l li').forEach((li,i)=>li.setAttribute('aria-selected',String(i===palSel)));const el=document.querySelector(`#pal-l li[data-pi="${palSel}"]`);el&&el.scrollIntoView({block:'nearest'});}
+function addTarget(it){S.cur.targets.push({item:it,rate:10});closeLayer();go('plan');toast(`${nm(it)} を出荷に追加しました`);}
+
+/* ================= ALTS ================= */
+function renderAlts(){
+  const q=$('#a-search').value.trim().toLowerCase(),f=S.afilter||'all';
+  const altIds=Object.keys(R).filter(r=>R[r].a).sort((a,b)=>R[a].o[0][0].localeCompare(R[b].o[0][0]));
+  const nOn=altIds.filter(r=>S.unl[r]).length;
+  $('#a-count').innerHTML=`<span class="num" style="font-size:22px">${nOn}</span> <span class="muted" style="font-size:14px">/ ${altIds.length} 件を解禁済み</span>`;
+  $('#a-prog').innerHTML=altIds.map(r=>`<i class="${S.unl[r]?'on':''}"></i>`).join('');
+  $('#a-filter').innerHTML=[['all','すべて'],['unl','解禁済み'],['lock','未解禁']].map(([k,l])=>`<button type="button" class="chip plain" data-afilter="${k}" aria-pressed="${f===k}">${l}</button>`).join('');
+  const items=Object.keys(producers).filter(it=>!isRaw(it)&&(producers[it].filter(r=>isPrimary(r,it)).length>1||producers[it].some(r=>R[r].a&&isPrimary(r,it))));
+  const rows=[];
+  groupItems().forEach(g=>g.items.forEach(it=>{if(!items.includes(it))return;
+    const rids=producers[it].filter(r=>isPrimary(r,it));const alts=rids.filter(r=>R[r].a);
+    const shown=alts.filter(r=>f==='all'||(f==='unl')===!!S.unl[r]);
+    const match=!q||I[it].j.toLowerCase().includes(q)||I[it].n.toLowerCase().includes(q)||rids.some(r=>R[r].n.toLowerCase().includes(q));
+    if(!match||(f!=='all'&&!shown.length))return;
+    const cur=effRecipe(it);
+    const opts=`<option value="__def"${!has(S.pref,it)?' selected':''}>標準（${esc(defaults[it]?rn(defaults[it]):'外部搬入')}）</option>`+
+      producers[it].map(rid=>`<option value="${rid}"${has(S.pref,it)&&S.pref[it]===rid?' selected':''}>${esc(rn(rid))}（${esc(mn(R[rid].m))}）${isLocked(rid)?' 未解禁':''}</option>`).join('')+
+      `<option value=""${S.pref[it]===''?' selected':''}>外部から搬入する</option>`;
+    rows.push(`<div class="altrow"><div class="nm">${glyph(it)}<div style="min-width:0;display:grid;gap:6px">${ilink(it)}<select class="rsel" data-pref="${it}" aria-label="${esc(nm(it))}の既定レシピ">${opts}</select>${cur&&isLocked(cur)?'<span class="pill p-bad" style="justify-self:start">既定が未解禁です</span>':''}<button class="btn sm ghost" type="button" data-cmpitem="${it}" style="justify-self:start">比較する</button></div></div>
+      <div class="alts">${(f==='all'?alts:shown).map(rid=>{const r=R[rid];return `<label class="altitem${S.unl[rid]?' on':''}"><span class="sw"><input type="checkbox" data-unl="${rid}"${S.unl[rid]?' checked':''} aria-label="${esc(rn(rid))}を解禁済みにする"></span><span><b>${esc(rn(rid).replace(/^代替: |^Alt: /,''))}</b><span>${esc(mn(r.m))} ・ ${r.i.map(([x,a])=>esc(nm(x))+' '+fmt(perMin(r,a))).join(' + ')} → ${r.o.map(([x,a])=>esc(nm(x))+' '+fmt(perMin(r,a))).join(' + ')}</span></span></label>`}).join('')||'<span class="muted small">代替レシピはありません。</span>'}</div></div>`);
+  }));
+  $('#a-list').innerHTML=rows.join('')||'<div class="empty">一致する項目がありません。</div>';
+}
+
+/* ================= MACHINES ================= */
+function renderMachines(){
+  const cnt={};for(const r of Object.values(R))cnt[r.m]=(cnt[r.m]||0)+1;
+  const ranges=MACH_ORDER.map(m=>{const vr=Object.values(R).filter(r=>r.m===m&&r.pv);return vr.length?[Math.min(...vr.map(r=>r.pv[0])),Math.max(...vr.map(r=>r.pv[1]))]:[M[m].p,M[m].p];});
+  const top=Math.max(...ranges.map(r=>r[1]));
+  const sx=v=>Math.sqrt(v/top)*100;
+  $('#m-prod').innerHTML=MACH_ORDER.map((m,i)=>{const [a,b]=ranges[i];const v=a!==b;
+    return `<div class="mbar"><div><b style="font-weight:600">${esc(mn(m))}</b><span class="sub">${cnt[m]||0} レシピ</span></div><div class="tr"><i class="${v?'var':''}" style="left:${v?sx(a):0}%;width:${v?sx(b)-sx(a):sx(b)}%"></i></div><div class="v">${v?`${a}–${b}`:fmt(a)}<small class="muted" style="font-size:11px"> MW</small></div></div>`}).join('')+`<p class="note" style="margin-top:10px">棒の長さは平方根スケールです（4 MWと1,500 MWを同じ図に収めるため）。</p>`;
+  const ext=[['Desc_MinerMk1_C',60],['Desc_MinerMk2_C',120],['Desc_MinerMk3_C',240],['Desc_OilPump_C',120],['Desc_FrackingExtractor_C',60]];
+  $('#m-ext').innerHTML=`<table><thead><tr><th>装置</th><th class="n">不純 /分</th><th class="n">普通 /分</th><th class="n">純粋 /分</th><th class="n">消費電力 MW</th></tr></thead><tbody>`+ext.map(([m,b])=>`<tr><td>${esc(mn(m))}</td><td class="n num">${fmt(b/2)}</td><td class="n num">${fmt(b)}</td><td class="n num">${fmt(b*2)}</td><td class="n">${m==='Desc_FrackingExtractor_C'?'0<span class="sub">資源井加圧機 150 MW が別途必要</span>':fmt(M[m].p)}</td></tr>`).join('')+
+  `<tr><td>${esc(mn('Desc_WaterPump_C'))}</td><td class="n muted" colspan="3">水面に設置 ・ 120 m³/分</td><td class="n">${fmt(M.Desc_WaterPump_C.p)}</td></tr></tbody></table>`;
+  const gorder=['Desc_GeneratorBiomass_Automated_C','Desc_GeneratorCoal_C','Desc_GeneratorFuel_C','Desc_GeneratorNuclear_C'];
+  $('#m-gen').innerHTML=`<table><thead><tr><th>発電機</th><th class="n">出力 MW</th><th>燃料</th><th class="n">燃料エネルギー</th><th class="n">燃料消費 /分</th><th class="n">水 m³/分</th></tr></thead><tbody>`+gorder.map(g=>{const gd=G[g];const fu=gd.f.filter(f=>I[f]&&I[f].e>0);
+    return fu.map((f,ix)=>`<tr>${ix===0?`<td rowspan="${fu.length}"><b style="font-weight:600">${esc(mn(g))}</b></td><td class="n num" rowspan="${fu.length}">${gd.p}</td>`:''}<td class="nw">${glyph(f,'s')} ${ilink(f)}</td><td class="n">${fmt(I[f].e)} MJ${I[f].l?'/m³':''}</td><td class="n num">${fmt(gd.p*60/I[f].e,3)}</td><td class="n">${gd.w?fmt(gd.p*gd.w*60/1000):'—'}</td></tr>`).join('')}).join('')+
+    `<tr><td><b style="font-weight:600">${esc(mn('Desc_GeneratorGeoThermal_C'))}</b></td><td class="n num">100–600</td><td colspan="4" class="small muted">間欠泉に設置。燃料不要。平均出力は純度で変わります（不純 100 / 普通 200 / 純粋 400 MW）。</td></tr></tbody></table>`;
+}
+
+/* ================= shell ================= */
+const VIEWS=['plan','tree','compare','items','alts','machines'];
+const RENDER={plan:renderPlan,tree:renderTree,compare:renderCompare,items:renderItems,alts:renderAlts,machines:renderMachines};
+function render(anim){
+  document.querySelectorAll('#nav button').forEach(b=>{if(b.dataset.v===S.tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+  VIEWS.forEach(v=>{const el=$('#v-'+v);el.hidden=v!==S.tab;if(v===S.tab&&anim){el.classList.remove('enter');void el.offsetWidth;el.classList.add('enter');}});
+  $('#lang-ja').setAttribute('aria-pressed',String(S.lang==='ja'));$('#lang-en').setAttribute('aria-pressed',String(S.lang==='en'));
+  RENDER[S.tab]();
+  if(S.tab!=='plan')renderMeter();
+  save();
+}
+function go(tab){if(S.tab!==tab){S.tab=tab;render(true);window.scrollTo({top:0});}else render();}
+$('#cnt').textContent=`${Object.keys(I).length} アイテム ・ ${Object.keys(R).length} レシピ`;
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)go(b.dataset.v);});
+$('#meter').onclick=()=>go('plan');
+$('#qs-open').onclick=openPal;
+$('#lang-ja').onclick=()=>{S.lang='ja';render();};$('#lang-en').onclick=()=>{S.lang='en';render();};
+$('#isearch').addEventListener('input',renderItems);
+$('#a-search').addEventListener('input',renderAlts);
+document.addEventListener('keydown',e=>{
+  if((e.key==='k'&&(e.ctrlKey||e.metaKey))||(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))){e.preventDefault();openPal();}
+  else if(e.key==='Escape'&&$('#layer').innerHTML){closeLayer();}
+  else if(e.key==='Enter'&&e.target.closest&&e.target.closest('.gnode,.pt')){e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}
+});
+function flashRecipe(it){const el=document.getElementById('rr-'+it);if(!el)return;el.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(()=>el.querySelector('select')&&el.querySelector('select').focus({preventScroll:true}),350);}
+document.addEventListener('click',e=>{
+  const T=e.target;
+  if(T.closest('[data-close]')){closeLayer();return;}
+  const li=T.closest('#pal-l li[data-pi]');if(li&&!T.closest('button')){openDrawer(palList[+li.dataset.pi]);return;}
+  const gn=T.closest('.gnode');if(gn){if(gn.dataset.rec)flashRecipe(gn.dataset.rec);else openDrawer(gn.dataset.item);return;}
+  const pt=T.closest('[data-pt]');if(pt){cHot=pt.dataset.pt;renderCompare();const row=document.getElementById('cr-'+cHot);row&&row.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});return;}
+  const tt=T.closest('[data-totree]');if(tt){const X=TS();X.item=tt.dataset.totree;X.qty=+tt.dataset.q||10;X.col={};closeLayer();go('tree');return;}
+  const tg=T.closest('[data-tg]');if(tg){const X=TS(),k=tg.dataset.tg;if(X.col[k])delete X.col[k];else X.col[k]=1;const open=!X.col[k];tg.setAttribute('aria-expanded',String(open));const kids=tg.closest('.tn').querySelector(':scope>.tkids');if(kids)kids.hidden=!open;save();return;}
+  const dp=T.closest('[data-dplan]');if(dp){addTarget(dp.dataset.dplan);return;}
+  const ci=T.closest('[data-cmpitem]');if(ci){S.cItem=ci.dataset.cmpitem;cHot=null;closeLayer();go('compare');return;}
+  const il=T.closest('[data-item]');if(il&&!T.closest('select')){openDrawer(il.dataset.item);return;}
+  const so=T.closest('[data-sort]');if(so){const k=so.dataset.sort;cSort=cSort.k===k?{k,dir:-cSort.dir}:{k,dir:1};renderCompare();return;}
+  const qk=T.closest('[data-quick]');if(qk){S.cItem=qk.dataset.quick;cHot=null;renderCompare();save();return;}
+  const ic=T.closest('[data-icat]');if(ic){S.icat=ic.dataset.icat;renderItems();save();return;}
+  const af=T.closest('[data-afilter]');if(af){S.afilter=af.dataset.afilter;renderAlts();save();return;}
+  const td=T.closest('[data-tdel]');if(td){S.cur.targets.splice(+td.dataset.tdel,1);renderPlan();save();return;}
+  if(T.closest('#p-add')){S.cur.targets.push({item:'Desc_IronPlateReinforced_C',rate:10});renderPlan();save();const ss=document.querySelectorAll('#p-targets select');ss[ss.length-1]&&ss[ss.length-1].focus();return;}
+  const pl=T.closest('[data-pload]');if(pl){const n=pl.dataset.pload;S.cur=JSON.parse(JSON.stringify(S.plans[n]));S.curName=n;renderPlan();save();toast(`「${n}」を開きました`);return;}
+  const pd=T.closest('[data-pdel]');if(pd){
+    if(pd.dataset.confirm){const n=pd.dataset.pdel;delete S.plans[n];if(S.curName===n)S.curName='';renderPlan();save();toast(`「${n}」を削除しました`);}
+    else{pd.dataset.confirm='1';pd.textContent='もう一度押して削除';pd.classList.remove('ghost');setTimeout(()=>{if(pd.isConnected){delete pd.dataset.confirm;pd.textContent='削除';pd.classList.add('ghost');}},3000);}
+    return;}
+  const up=T.closest('[data-useplan]');if(up){const rid=up.dataset.useplan,it=S.cItem;
+    if(rid===effRecipe(it))delete S.cur.over[it];else S.cur.over[it]=rid;renderCompare();renderMeter();save();toast(`計画の${nm(it)}を「${rn(rid)}」に変更しました`);return;}
+  const ud=T.closest('[data-usedef]');if(ud){const rid=ud.dataset.usedef,it=S.cItem;
+    if(rid===defaults[it])delete S.pref[it];else S.pref[it]=rid;renderCompare();save();toast(`${nm(it)}の既定を「${rn(rid)}」にしました`);return;}
+});
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.id==='c-item'){S.cItem=t.value;cHot=null;renderCompare();save();}
+  else if(t.id==='c-rate'){S.cRate=Math.max(0.01,+t.value||1);renderCompare();save();}
+  else if(t.id==='c-water'){S.cWater=t.checked;renderCompare();save();}
+  else if(t.id==='c-unl'){S.cUnl=t.checked;renderCompare();save();}
+  else if(t.id==='c-group'){S.cGroup=t.checked;renderCompare();save();}
+  else if(t.dataset.ti!==undefined){S.cur.targets[+t.dataset.ti].item=t.value;renderPlan();save();}
+  else if(t.dataset.tr!==undefined){S.cur.targets[+t.dataset.tr].rate=Math.max(0,+t.value||0);renderPlan();save();}
+  else if(t.dataset.ov!==undefined){const it=t.dataset.ov;if(t.value===(effRecipe(it)||''))delete S.cur.over[it];else S.cur.over[it]=t.value;renderPlan();save();toast(`${nm(it)}のレシピを変更しました`);}
+  else if(t.id==='t-item'){const X=TS();X.item=t.value;X.col={};renderTree();save();}
+  else if(t.id==='t-qty'){TS().qty=Math.max(0.0001,+t.value||1);renderTree();save();}
+  else if(t.id==='t-ceil'){TS().ceil=t.checked;renderTree();save();}
+  else if(t.dataset.tov!==undefined){const X=TS(),it=t.dataset.tov;if(t.value===(effRecipe(it)||''))delete X.over[it];else X.over[it]=t.value;renderTree();save();
+    const r=document.querySelector(`.trow[data-it="${CSS.escape(it)}"]`);if(r){r.classList.add('flash');}toast(`${nm(it)}のレシピを変更しました（ツリー全体に反映）`);}
+  else if(t.dataset.stock!==undefined){const X=TS(),v=+t.value;if(v>0)X.stock[t.dataset.stock]=v;else delete X.stock[t.dataset.stock];renderTree();save();}
+  else if(t.id==='p-miner'){S.cur.miner=t.value;renderPlan();save();}
+  else if(t.id==='p-purity'){S.cur.purity=+t.value;renderPlan();save();}
+  else if(t.id==='p-expow'){S.cur.expow=t.checked;renderPlan();save();}
+  else if(t.dataset.unl!==undefined){if(t.checked)S.unl[t.dataset.unl]=1;else delete S.unl[t.dataset.unl];renderAlts();save();}
+  else if(t.dataset.pref!==undefined){const it=t.dataset.pref;if(t.value==='__def')delete S.pref[it];else S.pref[it]=t.value;for(const k in ICOL)delete ICOL[k];renderAlts();save();toast(`${nm(it)}の既定レシピを更新しました`);}
+});
+$('#t-open').onclick=()=>{TS().col={};renderTree();save();};
+$('#t-close').onclick=()=>{const X=TS();X.col={};document.querySelectorAll('#t-tree .trow').forEach(r=>{const kids=r.parentElement.querySelector(':scope>.tkids');if(kids&&[...kids.children].every(c=>!c.querySelector('.tkids')))X.col[r.dataset.path]=1;});renderTree();save();};
+$('#t-copy').onclick=()=>{const txt=treeText();const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('コピーしました');}catch(e){toast('コピーできませんでした');}ta.remove();};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('ツリーをテキストでコピーしました'),fb);}catch(e){fb();}};
+$('#t-ovreset').onclick=()=>{TS().over={};renderTree();save();toast('ツリーのレシピ変更をリセットしました');};
+$('#t-ovdef').onclick=()=>{const X=TS(),n=Object.keys(X.over).length;if(!n){toast('ツリーで変更したレシピはありません');return;}
+  for(const [it,rid] of Object.entries(X.over)){if(rid===defaults[it])delete S.pref[it];else S.pref[it]=rid;}X.over={};for(const k in ICOL)delete ICOL[k];renderTree();save();toast(`${n} 件を既定のレシピにしました`);};
+$('#t-ovplan').onclick=()=>{const X=TS(),n=Object.keys(X.over).length;if(!n){toast('ツリーで変更したレシピはありません');return;}
+  Object.assign(S.cur.over,X.over);renderMeter();save();toast(`${n} 件のレシピを生産計画にも反映しました`);};
+(function(){const hl=it=>{document.querySelectorAll('.trow.hl,.midrow.hl').forEach(e=>e.classList.remove('hl'));if(!it)return;document.querySelectorAll(`.trow[data-it="${CSS.escape(it)}"],.midrow[data-hl="${CSS.escape(it)}"]`).forEach(e=>e.classList.add('hl'));};
+  const v=$('#v-tree');v.addEventListener('pointerover',e=>{if(e.target.closest('select,input'))return;const r=e.target.closest('.trow,.midrow');hl(r?(r.dataset.it||r.dataset.hl):null);});
+  v.addEventListener('pointerleave',()=>hl(null));})();
+$('#p-save').onclick=()=>{const n=$('#p-name').value.trim();if(!n){toast('計画名を入力してください');$('#p-name').focus();return;}S.plans[n]=JSON.parse(JSON.stringify(S.cur));S.curName=n;renderPlan();save();toast(`「${n}」を保存しました`);};
+$('#p-ovreset').onclick=()=>{S.cur.over={};renderPlan();save();toast('この計画のレシピ変更をリセットしました');};
+$('#p-ovdef').onclick=()=>{const n=Object.keys(S.cur.over).length;if(!n){toast('この計画で変更したレシピはありません');return;}
+  for(const [it,rid] of Object.entries(S.cur.over)){if(rid===defaults[it])delete S.pref[it];else S.pref[it]=rid;}S.cur.over={};renderPlan();save();toast(`${n} 件を既定のレシピにしました`);};
+$('#a-allon').onclick=()=>{Object.keys(R).forEach(r=>{if(R[r].a)S.unl[r]=1;});renderAlts();save();toast('すべての代替レシピを解禁済みにしました');};
+$('#a-alloff').onclick=()=>{S.unl={};renderAlts();save();toast('すべての代替レシピを未解禁にしました');};
+$('#a-reset').onclick=()=>{S.pref={};for(const k in ICOL)delete ICOL[k];renderAlts();save();toast('既定レシピを初期状態に戻しました');};
+$('#x-export').onclick=()=>{const txt=JSON.stringify({v:1,unl:S.unl,pref:S.pref,plans:S.plans,cur:S.cur});const ta=$('#x-text');ta.value=txt;
+  const fb=()=>{ta.focus();ta.select();toast('選択しました。コピーして保管してください');};
+  try{navigator.clipboard.writeText(txt).then(()=>toast('コピーしました'),fb);}catch(e){fb();}};
+$('#x-import').onclick=()=>{try{const o=JSON.parse($('#x-text').value);if(!o||typeof o!=='object')throw 0;
+  if(o.unl)S.unl=o.unl;if(o.pref)S.pref=o.pref;if(o.plans)S.plans=o.plans;if(o.cur)S.cur=o.cur;render();toast('読み込みました');}
+  catch(e){toast('読み込めませんでした。書き出した文字列をそのまま貼り付けてください');}};
+if(!VIEWS.includes(S.tab))S.tab='plan';
+const h=location.hash.slice(1);if(VIEWS.includes(h))S.tab=h;
+render(true);
+})();
+</script>

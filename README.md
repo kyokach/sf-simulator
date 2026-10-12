@@ -1,1 +1,54 @@
-# sf-simulator
+# FICSIT 生産ノート（sf-simulator）
+
+Satisfactory（1.0 / 1.1）の工場づくりを助ける、日本語の非公式Webツールです。
+
+**▶ https://kyokach.github.io/sf-simulator/**
+
+- **生産計画**: 1分あたりの出荷量から、装置の台数・消費電力・原料を計算。コンベアが流れる工場フロー図つき
+- **部材ツリー**: 決まった個数を作るのに必要な素材を原料まで分解。各段でレシピを切り替えられ、手持ちを差し引いた不足分も計算
+- **レシピ比較**: 標準レシピと代替レシピを、同じ生産量での電力・資源量で比較（装置別のまとめ、散布図つき）
+- **代替レシピ管理**: ハードドライブで解禁した代替レシピを記録し、既定で使うレシピを設定
+- **装置・発電**: 生産装置の電力、採掘速度、発電機の燃料消費
+
+スマホのホーム画面に追加すると、アプリのように全画面で起動し、オフラインでも使えます。
+設定や保存した計画は、使っているブラウザの中にだけ保存されます（サーバーには送られません）。
+別の端末に移すときは「代替レシピ」画面の「設定のバックアップ」を使ってください。
+
+## 構成
+
+| パス | 内容 |
+| --- | --- |
+| `index.html` | 公開されるアプリ本体（データ込みの1ファイル。`src/build.py` が生成） |
+| `manifest.webmanifest`, `sw.js`, `*.png` | ホーム画面への追加・オフライン動作用（同上） |
+| `src/app.template.html` | アプリのソース（HTML / CSS / JavaScript） |
+| `src/data.json` | ゲームデータ（`src/build_data.py` が生成） |
+| `src/build_data.py` | SatisfactoryTools のデータから `src/data.json` を作るスクリプト |
+| `src/ja_items.txt` | アイテムの日本語名 |
+| `src/build.py` | `src/` から公開用ファイルをリポジトリ直下に出力するスクリプト |
+
+### 更新のしかた
+
+```sh
+# アプリを直したら（Pillow が必要: pip install pillow）
+python3 src/build.py
+
+# ゲームデータを作り直すとき
+git clone --depth 1 https://github.com/greeny/SatisfactoryTools /tmp/sft
+python3 src/build_data.py /tmp/sft/data/data1.0.json
+python3 src/build.py
+```
+
+## データ
+
+- レシピ・アイテム・装置の数値は、ゲーム本体のデータファイル（Docs.json）を抽出した
+  [SatisfactoryTools](https://github.com/greeny/SatisfactoryTools) のデータ v1.0 を使用しています。
+  パッチ1.1では生産レシピと装置の数値に変更はありません。
+- 粒子加速器・変換機・量子エンコーダー以外の装置は、ゲーム同様に固定電力として扱っています。
+- 日本語名はゲーム内表記に合わせています（一部は独自訳）。
+
+## ライセンス
+
+- アプリのコードは [MIT License](LICENSE) です。
+- ゲームデータの出典とフォントについては [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。
+
+Satisfactory は Coffee Stain Studios の作品です。このツールは非公式のファンメイドで、Coffee Stain Studios とは関係ありません。
