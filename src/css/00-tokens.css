@@ -1,0 +1,45 @@
+/* Layout: a terminal-style left rail (nav + live plan meter) beside one working column laid on a blueprint grid.
+   The one loud element is the factory flow graph in the planner: belts carry parts at speeds set by their throughput. */
+:root{
+  --bg:#111821; --grid:rgba(120,160,200,.06); --panel:#18222E; --panel-2:#1E2A38; --sunk:#141D27; --line:#2A3949; --line-2:#36485C;
+  --fg:#E4EBF2; --muted:#8C9BAB; --faint:#5F6F80;
+  --accent:#F79A46; --accent-2:#FFB877; --accent-ink:#1B1006; --accent-soft:rgba(247,154,70,.14);
+  --alt:#B39BFF; --alt-soft:rgba(179,155,255,.14); --good:#62D394; --good-soft:rgba(98,211,148,.12); --bad:#FF8574; --bad-soft:rgba(255,133,116,.13);
+  --shadow:0 12px 40px rgba(0,0,0,.45);
+  --toast-act:#B0520F; --found:rgba(150,175,205,.10); --found-l:rgba(150,175,205,.22); --lane:rgba(150,175,205,.16);
+  /* resource node colours */
+  --r-iron:#9DB3C9; --r-copper:#E08A52; --r-stone:#D4C29C; --r-coal:#8A949F; --r-gold:#EBC54E; --r-quartz:#EC96C6; --r-sulfur:#DCD85E;
+  --r-bauxite:#D06B52; --r-uranium:#86D266; --r-sam:#B08AF0; --r-oil:#B48A6A; --r-nitro:#78D0E2; --r-water:#5A9CF0; --r-none:#8C9BAB;
+  --f-display:"Chakra Petch","IBM Plex Sans JP",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans JP","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#EDF1F5; --grid:rgba(40,90,150,.07); --panel:#FFFFFF; --panel-2:#F6F8FB; --sunk:#F1F4F8; --line:#D4DCE5; --line-2:#BCC8D5;
+  --fg:#17212C; --muted:#5A6878; --faint:#8995A3;
+  --accent:#C9601A; --accent-2:#A94E12; --accent-ink:#FFFFFF; --accent-soft:rgba(201,96,26,.10);
+  --alt:#6A4FC8; --alt-soft:rgba(106,79,200,.10); --good:#1E8A52; --good-soft:rgba(30,138,82,.10); --bad:#C2412F; --bad-soft:rgba(194,65,47,.10);
+  --shadow:0 12px 40px rgba(30,50,80,.16);
+  --toast-act:#FFB877; --found:rgba(60,95,140,.07); --found-l:rgba(60,95,140,.18); --lane:rgba(60,95,140,.12);
+  --r-iron:#5E7894; --r-copper:#C2662C; --r-stone:#A8925E; --r-coal:#5E6873; --r-gold:#C29A14; --r-quartz:#C9579A; --r-sulfur:#A7A31C;
+  --r-bauxite:#B24C33; --r-uranium:#4C9A2E; --r-sam:#7E55CC; --r-oil:#8A6244; --r-nitro:#2E95AB; --r-water:#2F72CF; --r-none:#6E7C8B;
+  color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#EDF1F5; --grid:rgba(40,90,150,.07); --panel:#FFFFFF; --panel-2:#F6F8FB; --sunk:#F1F4F8; --line:#D4DCE5; --line-2:#BCC8D5;
+  --fg:#17212C; --muted:#5A6878; --faint:#8995A3;
+  --accent:#C9601A; --accent-2:#A94E12; --accent-ink:#FFFFFF; --accent-soft:rgba(201,96,26,.10);
+  --alt:#6A4FC8; --alt-soft:rgba(106,79,200,.10); --good:#1E8A52; --good-soft:rgba(30,138,82,.10); --bad:#C2412F; --bad-soft:rgba(194,65,47,.10);
+  --shadow:0 12px 40px rgba(30,50,80,.16);
+  --toast-act:#FFB877; --found:rgba(60,95,140,.07); --found-l:rgba(60,95,140,.18); --lane:rgba(60,95,140,.12);
+  --r-iron:#5E7894; --r-copper:#C2662C; --r-stone:#A8925E; --r-coal:#5E6873; --r-gold:#C29A14; --r-quartz:#C9579A; --r-sulfur:#A7A31C;
+  --r-bauxite:#B24C33; --r-uranium:#4C9A2E; --r-sam:#7E55CC; --r-oil:#8A6244; --r-nitro:#2E95AB; --r-water:#2F72CF; --r-none:#6E7C8B;
+  color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;color:var(--fg);font:14px/1.6 var(--f-body);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+

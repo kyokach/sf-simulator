@@ -1,0 +1,46 @@
+/* ---------- layout simulator ---------- */
+.lx-svg{background:var(--bg)}
+.lx-svg .gl8{stroke:var(--found-l);fill:none}
+.lx-svg .g1{stroke:var(--found)}
+.lx-svg .g1r{display:none}
+.lx-svg.z-hi .g1r{display:inline}
+#lx-tiles rect{fill:var(--found);stroke:var(--found-l);stroke-width:.06}
+.lbelt .bb{fill:none;stroke:var(--panel-2);stroke-width:2.6;stroke-linejoin:round;stroke-linecap:square}
+.lbelt .bc{fill:none;stroke-width:1.9;stroke-linejoin:round;stroke-opacity:.55}
+.lbelt .bm{fill:none;stroke:var(--fg);stroke-opacity:.55;stroke-width:.5;stroke-dasharray:.6 2.2;stroke-linecap:round;animation:lbelt 1.1s linear infinite}
+@keyframes lbelt{to{stroke-dashoffset:-2.8}}
+.lbelt.over .bb{stroke:var(--bad);stroke-dasharray:2 1.2}
+.lbelt.on .bc{stroke-opacity:.95}
+.blab{pointer-events:none}
+.blab rect{fill:var(--panel-2);stroke:var(--line-2);stroke-width:1}
+.blab text{font:600 10.5px var(--f-body);fill:var(--fg)}
+.lbelt.over .blab rect{fill:var(--bad-soft);stroke:var(--bad)}
+.lbelt.over .blab text{fill:var(--bad)}
+.lx-svg.z-lo .blab{display:none}
+.lblock{cursor:grab;outline:none}
+.lx-svg.dragging .lblock{cursor:grabbing}
+.lblock .bo{fill:color-mix(in srgb,var(--panel) 70%,transparent);stroke:var(--mc);stroke-width:.35;stroke-opacity:.8}
+.lblock .lane{fill:var(--lane)}
+.lblock .lane.out{fill:color-mix(in srgb,var(--mc) 22%,transparent)}
+.lblock .mach{fill:color-mix(in srgb,var(--mc) 30%,var(--panel));stroke:var(--mc);stroke-width:.22}
+.lblock .lbl{pointer-events:none}
+.lblock .lbl text{paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
+.lblock .blab1{font:600 12.5px var(--f-body);fill:var(--fg)}
+.lblock.sel .blab1{fill:var(--accent)}
+.lblock .blab2{font:500 11px var(--f-body);fill:var(--muted)}
+.lblock:hover .bo,.lblock:focus-visible .bo{stroke-width:.6;stroke-opacity:1}
+.lblock.sel .bo{stroke:var(--accent);stroke-width:.8;stroke-opacity:1;filter:drop-shadow(0 0 1.2px color-mix(in srgb,var(--accent) 60%,transparent))}
+.lblock.clash .bo{stroke:var(--bad);stroke-width:.7;stroke-dasharray:1.6 .9;fill:var(--bad-soft)}
+.lblock.dock .db{fill:color-mix(in srgb,var(--c) 18%,var(--panel));stroke:var(--c);stroke-width:.3}
+.lblock.dock.sel .db{stroke:var(--accent);stroke-width:.7}
+.lblock .dch{font:700 30px var(--f-body)}
+.lblock .dlab{font:600 11px var(--f-body);fill:var(--fg)}
+.lblock .dlab.s{font-weight:500;fill:var(--muted)}
+.lx-svg.z-lo .dlab{display:none}
+.lx-3d{position:absolute;inset:0;z-index:2;background:var(--bg)}
+.lx-3d canvas{display:block;width:100%!important;height:100%!important;outline:none}
+.l3-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);padding:24px;text-align:center}
+.l3-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:12px;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent);border:1px solid var(--line);padding:5px 12px;border-radius:999px;pointer-events:none;white-space:nowrap}
+.lx .fx-tools{z-index:4}
+.lx .fx-zoom{z-index:4}
+#v-layout .fx-insp .ins-stats b{font-size:18px}

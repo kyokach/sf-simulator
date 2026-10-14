@@ -1,0 +1,206 @@
+<title>FICSIT 生産ノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&display=swap">
+<style>
+/*__CSS__*/
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand"><div class="mark" aria-hidden="true"></div><div><b>FICSIT 生産ノート</b><span id="cnt"></span></div></div>
+    <button class="qs" type="button" id="qs-open"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="qt">アイテムを探す</span><kbd>Ctrl K</kbd></button>
+    <nav class="nav" id="nav" aria-label="画面">
+      <button type="button" data-v="plan"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="6" height="5" rx="1"/><rect x="2" y="15" width="6" height="5" rx="1"/><rect x="16" y="9.5" width="6" height="5" rx="1"/><path d="M8 6.5h3a2 2 0 0 1 2 2V10a2 2 0 0 0 2 2h1M8 17.5h3a2 2 0 0 0 2-2V14a2 2 0 0 1 2-2"/></svg><span>生産計画</span></button>
+      <button type="button" data-v="layout"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9M14 13h4v4h-4z"/></svg><span>配置</span></button>
+      <button type="button" data-v="tree"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M5 17v-3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/></svg><span>部材ツリー</span></button>
+      <button type="button" data-v="compare"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>レシピ比較</span></button>
+      <button type="button" data-v="items"><svg viewBox="0 0 24 24"><path d="M7 3.5 12 1l5 2.5v5L12 11 7 8.5zM2 13.5 7 11l5 2.5v5L7 21l-5-2.5zM12 13.5l5-2.5 5 2.5v5L17 21l-5-2.5z"/></svg><span>アイテム</span></button>
+      <button type="button" data-v="alts"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2c0 4-6 3-10.5 6.3"/></svg><span>代替レシピ</span></button>
+      <button type="button" data-v="machines"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>装置・発電</span></button>
+    </nav>
+    <button class="meter" type="button" id="meter" aria-label="現在の計画を開く">
+      <span class="t" id="m-name">現在の計画</span>
+      <span class="v" id="m-pow">0<small>MW</small></span>
+      <span class="gauge" id="m-gauge" aria-hidden="true"></span>
+      <span class="row2"><span>装置 <b id="m-mc">0</b></span><span>原料 <b id="m-raw">0</b>/分</span></span>
+    </button>
+    <div class="lang" role="group" aria-label="名前の言語"><button type="button" id="lang-ja">日本語</button><button type="button" id="lang-en">English</button></div>
+  </aside>
+
+  <main class="main">
+    <!-- PLAN: factory canvas -->
+    <section class="view full" id="v-plan" hidden>
+      <div class="fx" id="fx">
+        <header class="fx-top">
+          <div class="fx-plan">
+            <input id="fx-name" class="fx-name" type="text" placeholder="名前のない計画" aria-label="計画名" autocomplete="off">
+            <button class="btn sm" type="button" data-fxa="save">保存</button>
+            <button class="btn sm ghost" type="button" data-fxa="plans">計画を切り替え</button>
+          </div>
+          <div class="fx-orders" id="fx-orders" aria-label="出荷するもの（1分あたり）"></div>
+        </header>
+        <div class="fx-stage" id="fx-stage">
+          <svg id="fx-svg" class="fx-svg" aria-label="工場キャンバス。ノードをドラッグで移動、選ぶと右のパネルで設定できます">
+            <defs><pattern id="fx-dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1.1" class="dot"/></pattern></defs>
+            <g id="fx-world"><rect x="-40000" y="-40000" width="80000" height="80000" fill="url(#fx-dots)"/><g id="fx-edges"></g><g id="fx-nodes"></g></g>
+          </svg>
+          <div class="fx-empty" id="fx-empty" hidden></div>
+          <div class="fx-tools" role="toolbar" aria-label="キャンバスの操作">
+            <button class="tbtn" type="button" data-fx="undo" title="元に戻す（Ctrl+Z）" aria-label="元に戻す"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+            <button class="tbtn" type="button" data-fx="redo" title="やり直す（Ctrl+Shift+Z）" aria-label="やり直す"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+            <span class="tsep"></span>
+            <button class="tbtn" type="button" data-fx="arrange" title="自動で並べ直す"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="3" y="15" width="6" height="5" rx="1"/><rect x="15" y="9.5" width="6" height="5" rx="1"/><path d="M9 6.5h2.5a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H9M13 12h2"/></svg><span>整列</span></button>
+            <button class="tbtn" type="button" data-fx="fit" title="全体を表示（F）"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>全体</span></button>
+            <span class="tsep"></span>
+            <button class="tbtn" type="button" data-fx="power" aria-pressed="false" title="発電所も計画に含める"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>電力自給</span></button>
+            <button class="tbtn" type="button" data-fx="opt" title="おまかせ最適化"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg><span>最適化</span></button>
+            <button class="tbtn" type="button" data-fx="layout" title="配置シミュレーターで見る"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg><span>配置</span></button>
+          </div>
+          <div class="fx-zoom" role="group" aria-label="拡大と縮小"><button type="button" data-fx="zout" aria-label="縮小">−</button><span id="fx-zoomv">100%</span><button type="button" data-fx="zin" aria-label="拡大">+</button></div>
+          <svg class="fx-mini" id="fx-mini" aria-label="全体図。クリックでその場所へ移動"></svg>
+          <div class="tip" id="fx-tip" hidden></div>
+        </div>
+        <aside class="fx-insp" id="fx-insp" aria-label="詳細パネル"></aside>
+        <footer class="fx-status" id="fx-status"></footer>
+      </div>
+    </section>
+
+    <!-- LAYOUT -->
+    <section class="view full" id="v-layout" hidden>
+      <div class="fx lx" id="lx">
+        <header class="fx-top">
+          <div class="fx-plan"><h1 class="lx-h">配置シミュレーター</h1><span class="small muted">装置の実寸で、計画を設計図に並べます</span></div>
+        </header>
+        <div class="fx-stage lx-stage" id="lx-stage">
+          <svg id="lx-svg" class="fx-svg lx-svg" aria-label="配置図。ラインをドラッグで移動できます">
+            <defs>
+              <pattern id="lx-g1" width="1" height="1" patternUnits="userSpaceOnUse"><path class="gl8 g1" d="M1 0H0V1" fill="none"/></pattern>
+              <pattern id="lx-g8" width="8" height="8" patternUnits="userSpaceOnUse"><path class="gl8 g8" d="M8 0H0V8" fill="none"/></pattern>
+            </defs>
+            <g id="lx-world">
+              <rect class="g1r" x="-4000" y="-4000" width="8000" height="8000" fill="url(#lx-g1)"/>
+              <rect x="-4000" y="-4000" width="8000" height="8000" fill="url(#lx-g8)"/>
+              <g id="lx-tiles"></g><g id="lx-belts"></g><g id="lx-blocks"></g>
+            </g>
+          </svg>
+          <div class="lx-3d" id="lx-3d" hidden></div>
+          <div class="fx-empty" id="lx-empty" hidden></div>
+          <div class="fx-tools" role="toolbar" aria-label="配置の操作">
+            <button class="tbtn" type="button" data-fx="undo" title="元に戻す（Ctrl+Z）" aria-label="元に戻す"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+            <button class="tbtn" type="button" data-fx="redo" title="やり直す" aria-label="やり直す"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+            <span class="tsep"></span>
+            <button class="tbtn" type="button" data-lx="auto" title="自動で並べ直す"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="3" y="15" width="6" height="5" rx="1"/><rect x="15" y="9.5" width="6" height="5" rx="1"/><path d="M9 6.5h2.5a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H9M13 12h2"/></svg><span>自動配置</span></button>
+            <button class="tbtn" type="button" data-lx="fit" title="全体を表示（F）"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>全体</span></button>
+            <button class="tbtn" type="button" data-lx="rot" title="選んだラインを回す（R）"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg><span>回転</span></button>
+            <span class="tsep"></span>
+            <button class="tbtn" type="button" data-lx="mode" aria-pressed="false" title="3Dで見る"><svg viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/></svg><span>3D</span></button>
+            <button class="tbtn" type="button" data-lx="toplan" title="工場キャンバスへ"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="6" height="5" rx="1"/><rect x="2" y="15" width="6" height="5" rx="1"/><rect x="16" y="9.5" width="6" height="5" rx="1"/><path d="M8 6.5h3a2 2 0 0 1 2 2V10a2 2 0 0 0 2 2h1M8 17.5h3a2 2 0 0 0 2-2V14a2 2 0 0 1 2-2"/></svg><span>計画</span></button>
+          </div>
+          <div class="fx-zoom" role="group" aria-label="拡大と縮小"><button type="button" data-lx="zout" aria-label="縮小">−</button><span id="lx-zoomv"></span><button type="button" data-lx="zin" aria-label="拡大">+</button></div>
+        </div>
+        <aside class="fx-insp" id="lx-insp" aria-label="詳細パネル"></aside>
+        <footer class="fx-status" id="lx-status"></footer>
+      </div>
+    </section>
+
+    <!-- TREE -->
+    <section class="view" id="v-tree" hidden>
+      <div class="vhead">
+        <div><h1>部材ツリー</h1><p>ひとつのものを決まった個数だけ作るとき、何がどれだけ要るかを原料まで分解します。各段のレシピはその場で切り替えられます。</p></div>
+      </div>
+      <div class="card tctl">
+        <div class="order big"><span id="t-gl"></span><select id="t-item" aria-label="作るもの"></select><input type="number" id="t-qty" min="0" step="any" aria-label="個数"><span class="u" id="t-unit">個</span></div>
+        <div class="row" style="gap:8px 16px">
+          <label class="sw"><input type="checkbox" id="t-ceil"> 製作回数を切り上げる</label>
+          <span class="row" style="gap:6px"><button class="btn sm" type="button" id="t-open">すべて開く</button><button class="btn sm ghost" type="button" id="t-close">原料だけたたむ</button><button class="btn sm ghost" type="button" id="t-copy">テキストでコピー</button></span>
+        </div>
+      </div>
+      <div class="readout" id="t-stats"></div>
+      <div class="split tsplit">
+        <div class="card">
+          <div class="sec"><h2 class="sec-t">分解ツリー</h2><div class="row" style="gap:6px"><button class="btn sm" type="button" id="t-ovdef">この選択を既定にする</button><button class="btn sm ghost" type="button" id="t-ovplan">計画にも反映</button><button class="btn sm ghost" type="button" id="t-ovreset">変更をリセット</button></div></div>
+          <p class="note" style="margin-bottom:12px">数字は「その行のために必要な量」です。行にカーソルを乗せると、同じ素材が使われている箇所がすべて光ります。レシピの変更は、ツリー内の同じ素材すべてに反映されます。</p>
+          <div class="tree" id="t-tree"></div>
+        </div>
+        <div style="display:grid;gap:20px">
+          <div class="card"><div class="sec"><h2 class="sec-t">原料の合計</h2><small id="t-rawnote"></small></div><div class="res" id="t-raw"></div></div>
+          <div class="card"><div class="sec"><h2 class="sec-t">作る中間素材</h2><small>手持ちを入れると不足分だけ計算</small></div><div id="t-mid"></div></div>
+          <div class="card" id="t-bycard"><div class="sec"><h2 class="sec-t">副産物</h2></div><div id="t-by"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPARE -->
+    <section class="view" id="v-compare" hidden>
+      <div class="vhead">
+        <div><h1>レシピ比較</h1><p>同じ量を作るとき、どのレシピが電力と資源を節約できるか。中間素材は既定のレシピで原料までさかのぼって計算します。</p></div>
+      </div>
+      <div class="card" style="display:grid;gap:14px">
+        <div class="row" style="align-items:end">
+          <div class="field" style="flex:1 1 240px"><label for="c-item">アイテム</label><select id="c-item"></select></div>
+          <div class="field"><label for="c-rate">生産量 /分</label><input type="number" id="c-rate" min="0.01" step="any"></div>
+          <label class="sw" style="padding-bottom:8px"><input type="checkbox" id="c-group"> 装置ごとにまとめる</label>
+          <label class="sw" style="padding-bottom:8px"><input type="checkbox" id="c-unl"> 解禁済みだけ</label>
+          <label class="sw" style="padding-bottom:8px"><input type="checkbox" id="c-water"> 水を資源に含める</label>
+        </div>
+        <div class="chips" id="c-quick"></div>
+      </div>
+      <div class="msum" id="c-sum"></div>
+      <div class="card" id="c-plotcard">
+        <div class="sec"><h2 class="sec-t">電力 × 資源</h2><small>左下ほど省電力・省資源。点を押すと表の該当行へ。</small></div>
+        <div id="c-plot"></div>
+      </div>
+      <div id="c-out"></div>
+      <p class="note">資源比率は、必要な原料をマップ全体の最大採掘量（全ノードを採鉱機Mk.3・250%で掘った量）で割った合計です。「搬入品あり」は中間素材を外から持ち込む前提の値なので、最良の判定から外しています。粒子加速器・変換機・量子エンコーダーの電力は変動幅の平均です。</p>
+    </section>
+
+    <!-- ITEMS -->
+    <section class="view" id="v-items" hidden>
+      <div class="vhead">
+        <div><h1>アイテム</h1><p>生産に関わる全アイテム。色は、そのアイテムを作るのに一番多く使う鉱石です。</p></div>
+        <div class="field" style="flex:0 1 300px"><label for="isearch">絞り込み</label><input type="search" id="isearch" placeholder="鋼梁、rotor、燃料…"></div>
+      </div>
+      <div class="chips" id="icats"></div>
+      <div id="igrid" style="display:grid;gap:10px"></div>
+    </section>
+
+    <!-- ALTS -->
+    <section class="view" id="v-alts" hidden>
+      <div class="vhead">
+        <div><h1>代替レシピ</h1><p>ハードドライブで手に入れた代替レシピを記録し、アイテムごとに既定で使うレシピを決めます。設定はこのブラウザに保存されます。</p></div>
+      </div>
+      <div class="card">
+        <div class="sec"><h2 class="sec-t" id="a-count"></h2><div class="row" style="gap:6px"><button class="btn sm" id="a-allon" type="button">すべて解禁</button><button class="btn sm ghost" id="a-alloff" type="button">すべて未解禁</button><button class="btn sm ghost" id="a-reset" type="button">既定レシピを初期化</button></div></div>
+        <div class="prog" id="a-prog" aria-hidden="true"></div>
+      </div>
+      <div class="row">
+        <input type="search" id="a-search" placeholder="アイテム名・レシピ名で絞り込み" aria-label="絞り込み" style="flex:1 1 240px">
+        <div class="chips" id="a-filter"></div>
+      </div>
+      <div class="card" id="a-list"></div>
+      <div class="card">
+        <div class="sec"><h2 class="sec-t">設定のバックアップ</h2></div>
+        <p class="note">解禁状況・既定レシピ・保存した計画をまとめた文字列です。別の端末で「読み込む」に貼り付けると復元できます。</p>
+        <div class="row" style="margin:10px 0"><button class="btn" id="x-export" type="button">書き出してコピー</button><button class="btn" id="x-import" type="button">貼り付けた内容を読み込む</button></div>
+        <textarea id="x-text" rows="3" aria-label="設定データ"></textarea>
+      </div>
+    </section>
+
+    <!-- MACHINES -->
+    <section class="view" id="v-machines" hidden>
+      <div class="vhead"><div><h1>装置・発電</h1><p>生産装置の消費電力、採掘速度、発電機ごとの燃料消費量。</p></div></div>
+      <div class="card"><div class="sec"><h2 class="sec-t">生産装置の消費電力</h2><small>斜線は変動電力（最小〜最大）</small></div><div id="m-prod"></div></div>
+      <div class="card"><div class="sec"><h2 class="sec-t">採掘装置</h2></div><div class="tbl" id="m-ext"></div></div>
+      <div class="card"><div class="sec"><h2 class="sec-t">発電機と燃料</h2></div><div class="tbl" id="m-gen"></div></div>
+      <p class="note">データはゲーム本体のデータファイル（Docs.json）を抽出した SatisfactoryTools のもの（v1.0）。パッチ1.1では生産レシピと装置の数値に変更はありません。日本語名はゲーム内表記に合わせ、一部は独自訳です。配置シミュレーターの装置の寸法は Satisfactory Wiki の数値、3D表示には three.js（MIT）を使っています。Satisfactory は Coffee Stain Studios の作品で、このツールは非公式のファンメイドです。ソースコードとライセンス: <a href="https://github.com/kyokach/sf-simulator" target="_blank" rel="noopener" style="color:var(--accent)">github.com/kyokach/sf-simulator</a>（MIT）</p>
+    </section>
+  </main>
+</div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script id="gamedata" type="application/json">__DATA__</script>
+<script>
+/*__JS__*/
+</script>

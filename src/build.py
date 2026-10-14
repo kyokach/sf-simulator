@@ -1,7 +1,9 @@
 """Build the GitHub Pages site from src/.
-   Run from the repository root:  python3 src/build.py
-   Outputs index.html, manifest.webmanifest, sw.js and icons at the repository root."""
-import os
+   Run from the repository root:  python3 src/build.py [--artifact PATH]
+   - Assembles src/index.html + src/css/*.css + src/js/*.js + src/data.json into one page.
+   - Writes index.html, manifest.webmanifest, sw.js and icons at the repository root.
+   - With --artifact PATH, also writes the bare page (no document skeleton) for a Claude artifact."""
+import os, sys, glob
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.dirname(HERE)
 P = lambda *a: os.path.join(HERE, *a)
@@ -9,9 +11,21 @@ O = lambda *a: os.path.join(OUT, *a)
 import json, re, hashlib
 from PIL import Image, ImageDraw
 
-tpl = open(P('app.template.html'), encoding='utf-8').read()
-data = open(P('data.json'), encoding='utf-8').read().replace('</', '<\\/')
-body = tpl.replace('__DATA__', data)
+def read(path):
+    return open(path, encoding='utf-8').read()
+
+css = '\n'.join(read(f) for f in sorted(glob.glob(P('css', '*.css'))))
+js = '\n'.join(f'/* ===== {os.path.basename(f)} ===== */\n' + read(f) for f in sorted(glob.glob(P('js', '*.js'))))
+shell = read(P('index.html'))
+data = read(P('data.json')).replace('</', '<\\/')
+body = (shell.replace('/*__CSS__*/', css)
+             .replace('/*__JS__*/', '(function(){\n"use strict";\n' + js + '\n})();')
+             .replace('__DATA__', data))
+assert '/*__' not in body, 'unfilled placeholder'
+
+if '--artifact' in sys.argv:
+    dest = sys.argv[sys.argv.index('--artifact') + 1]
+    open(dest, 'w', encoding='utf-8').write(body)
 
 # ---------- icons ----------
 def icon(size, maskable=False):
@@ -63,7 +77,7 @@ self.addEventListener('fetch',e=>{{
     if(req.mode==='navigate'){{e.respondWith(fetch(req).then(r=>{{const c=r.clone();caches.open(CACHE).then(x=>x.put('./index.html',c));return r;}}).catch(()=>caches.match('./index.html')));return;}}
     e.respondWith(caches.match(req).then(r=>r||fetch(req)));return;
   }}
-  if(/fonts\\.(googleapis|gstatic)\\.com$/.test(url.hostname)){{
+  if(/fonts\\.(googleapis|gstatic)\\.com$|cdnjs\\.cloudflare\\.com$/.test(url.hostname)){{
     e.respondWith(caches.open(CACHE).then(c=>c.match(req).then(hit=>{{const net=fetch(req).then(r=>{{c.put(req,r.clone());return r;}}).catch(()=>hit);return hit||net;}})));
   }}
 }});

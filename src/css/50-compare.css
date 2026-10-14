@@ -1,0 +1,18 @@
+/* ---------- compare ---------- */
+.msum{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.mcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:6px}
+.mcard h3{margin:0;font:600 15px var(--f-display);display:flex;justify-content:space-between;align-items:baseline}
+.mcard h3 small{font:500 12px var(--f-body);color:var(--muted)}
+.mcard .w{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;font-size:12px}
+.mcard .w span:first-child{color:var(--muted)}
+.mcard .w b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcard .w .num{font-size:13px}
+.scatter text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.scatter .ax{stroke:var(--line-2)}
+.scatter .gd{stroke:var(--line);stroke-dasharray:2 4}
+.scatter .zone{fill:var(--good-soft)}
+.scatter .pt{cursor:pointer}
+.scatter .pt circle{stroke:var(--panel);stroke-width:2;transition:r .15s}
+.scatter .pt:hover circle,.scatter .pt.hot circle{r:10}
+.scatter .pt text.lb{fill:var(--fg);font-size:11.5px;font-weight:500}
+

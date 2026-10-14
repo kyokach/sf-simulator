@@ -52,6 +52,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Building dimensions / 装置の寸法
+
+The building footprints used by the layout simulator (width × length × height in metres, in
+`src/js/05-sim.js`) are factual in-game sizes as listed in the building infoboxes of the
+Satisfactory Wiki (https://satisfactory.wiki.gg/). Only these numbers are used; no wiki text or
+images are included.
+
+配置シミュレーターの装置の寸法（`src/js/05-sim.js`）は、Satisfactory Wiki の各装置の情報欄に
+載っているゲーム内の大きさ（数値のみ）です。Wiki の文章や画像は含めていません。
+
+## three.js (loaded from cdnjs at runtime, not redistributed)
+
+The 3D view of the layout simulator loads three.js r128 from
+`https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js` when it is first opened.
+three.js is not included in this repository.
+
+Source: https://github.com/mrdoob/three.js — MIT License, Copyright © 2010-2021 three.js authors
+
 ## Fonts (loaded from Google Fonts, not redistributed)
 
 | Font | License |
